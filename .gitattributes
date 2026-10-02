@@ -1,0 +1,17 @@
+# Normalize text files in the repository
+* text=auto
+
+# Source code and project documentation
+*.py text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.csv text eol=lf
+
+# Project configuration files
+.gitignore text eol=lf
+.gitattributes text eol=lf
+LICENSE text eol=lf
