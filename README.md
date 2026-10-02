@@ -98,6 +98,15 @@ To be documented during implementation and experimental evaluation.
 
 Random seeds, software dependencies, experimental parameters, and dataset-generation procedures will be documented to support reproducibility.
 
+The current implementation starts this requirement with:
+
+- centralized experiment configuration in `src/config.py`,
+- validated domain models in `src/models.py`,
+- deterministic random number utilities in `src/random_utils.py`,
+- automated tests that protect configuration validation, model constraints, and random-seed behavior.
+
+This keeps parameter choices explicit before the fuzzy security assessment and optimization algorithms are implemented.
+
 ## Academic Integrity and AI Usage
 
 External code, datasets, or materials used in this project will be explicitly documented and cited.
