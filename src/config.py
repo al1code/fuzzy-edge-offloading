@@ -10,6 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from src.validation import validate_integer, validate_weights
+
 DEFAULT_RANDOM_SEED = 42
 
 
@@ -39,27 +41,21 @@ class ProjectPaths:
 
 @dataclass(frozen=True, slots=True)
 class ExperimentConfig:
-    """Top-level configuration shared by reproducible experiments."""
+    """Experiment configuration; task/server defaults are small smoke-test sizes."""
 
     random_seed: int = DEFAULT_RANDOM_SEED
     task_count: int = 30
     server_count: int = 5
 
     def __post_init__(self) -> None:
-        if self.random_seed < 0:
-            msg = "random_seed must be non-negative"
-            raise ValueError(msg)
-        if self.task_count <= 0:
-            msg = "task_count must be greater than zero"
-            raise ValueError(msg)
-        if self.server_count <= 0:
-            msg = "server_count must be greater than zero"
-            raise ValueError(msg)
+        validate_integer(self.random_seed, "random_seed")
+        validate_integer(self.task_count, "task_count", minimum=1)
+        validate_integer(self.server_count, "server_count", minimum=1)
 
 
 @dataclass(frozen=True, slots=True)
 class FuzzySecurityConfig:
-    """Weights for the paper's fuzzy security perspectives."""
+    """Perspective weights eta_k; equal defaults follow the paper's Table 4."""
 
     task_data_weight: float = 1.0 / 3.0
     task_type_weight: float = 1.0 / 3.0
@@ -71,9 +67,19 @@ class FuzzySecurityConfig:
             self.task_type_weight,
             self.terminal_lifecycle_weight,
         )
-        if any(weight < 0.0 for weight in weights):
-            msg = "security weights must be non-negative"
-            raise ValueError(msg)
-        if not abs(sum(weights) - 1.0) <= 1e-9:
-            msg = "security weights must sum to 1.0"
-            raise ValueError(msg)
+        validate_weights(weights, "security weights")
+
+
+@dataclass(frozen=True, slots=True)
+class LoadBalanceConfig:
+    """CPU, bandwidth, and memory weights alpha_1..3 from Eq. (5)."""
+
+    cpu_weight: float = 1.0 / 3.0
+    bandwidth_weight: float = 1.0 / 3.0
+    memory_weight: float = 1.0 / 3.0
+
+    def __post_init__(self) -> None:
+        validate_weights(
+            (self.cpu_weight, self.bandwidth_weight, self.memory_weight),
+            "load balance weights",
+        )
