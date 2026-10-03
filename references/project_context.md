@@ -21,9 +21,9 @@ implementation does not establish that the full MRR has been satisfied.
 | Guideline requirement | Current evidence | Remaining work |
 | --- | --- | --- |
 | 5.2-5.3: Define inputs/outputs and correctly model the fuzzy method | Equation mapping, validated triangles, expert/perspective aggregation, risk functions | Resolve linguistic-label mapping and confirm how the rule-base requirement applies to this paper's MRR |
-| 5.2-5.3: Test different inputs and maintain working code | Unit tests, latency/load calculators, and connected worked demos | Common multi-task evaluator and optimizer tests |
+| 5.2-5.3: Test different inputs and maintain working code | Unit/integration tests, multi-task evaluator, generation/replay, bounded exact search with hand/grid checks | Verify adaptive GA and SA-PSO against the small-instance optimum |
 | 5.2-5.3: Reproduce at least one core experiment and compare with the paper | No published experiment reproduced yet | Build simulation, record assumptions, reproduce a selected experiment, compare outcomes |
-| 5.3 and 11: Code quality and reproducibility | Validation, independent RNGs, pinned environment, run instructions | Seeded dataset generation and recorded experiment configurations/results |
+| 5.3 and 11: Code quality and reproducibility | Validation, independent RNGs, pinned environment, seeded inputs, parameter notes, JSON snapshots/checksums | Recorded optimizer budgets, multiple-seed experiments and results |
 | 6: Original contribution and fair baseline comparison | Contribution intentionally still undecided | Define a justified change, metrics, shared inputs, and controlled experiments |
 | 8-12: Technical report, references, README, and GitHub | Repository structure, source notes, README | Verified related work, 8-12 page report excluding references, figures/tables, final deliverables |
 | 14: Explain and demonstrate the implementation | Retained intermediates, adjustable worked demos, and a Turkish step-by-step guide | Explain the complete pipeline and demonstrate actual experiments |
@@ -42,23 +42,34 @@ required published-experiment reproduction or controlled extension comparison.
 
 ## Development Sequence
 
-1. Review the implemented fuzzy, latency, and load calculations using
-   [the step-by-step guide](adim_adim_rehber.md).
-2. Connect tasks, terminals, servers, links, and reservations into a consistent
-   scenario schema. The calculators use explicit units; published parameter
-   ambiguities remain recorded in [simulation notes](simulation.md).
-3. Build the common multi-task assignment evaluator and integration tests.
-4. Implement the normalized constrained objective before adding optimization.
-5. Introduce deterministic synthetic data with all unspecified choices recorded.
-6. Implement and test the selected baseline optimization scope.
-7. Run at least one core reference experiment and document comparability limits.
-8. Specify an original contribution, then evaluate it with the same inputs and
-   conditions as the baseline.
-9. Complete the report, presentation, literature review, and AI disclosure.
+The canonical development sequence is now the [11-stage roadmap](roadmap.md).
+Its stage numbers describe our workflow, not the course's official checkpoints.
+Stages 1-5 cover configuration, numerical fuzzy/latency/load calculations,
+the shared evaluator/objective, and reproducible synthetic data. Stage 6 adds
+bounded exact small-instance verification. All six have code and tests, subject
+to the explicitly open fuzzy scope questions above.
+
+Next: stage 7, adaptive genetic location search; then stage 8, SA-PSO and
+BOALBFS integration. The working baseline is targeted at stage 8, baseline
+experiments at stage 9, contribution evaluation at stage 10, and delivery at
+stage 11. Literature/source notes and explanation continue throughout.
 
 Parameter counts of 30 tasks and 5 servers in `ExperimentConfig` are development
 defaults. Reference experiments require explicitly selected configurations;
 Table 4 reports task-count and server-count ranges, not these smoke-test values.
+
+These completed stages are infrastructure and verification, not a completed
+reference experiment. `SyntheticScenarioConfig` explicitly selects
+60 tasks and 3 servers and records all additional choices. Generation does not
+repair infeasible edge assignments or wait for an author response.
+See [the current synthetic-data walkthrough](synthetic_data.md).
+
+The [exact solver](exact_search.md) searches all `(2*M+1)**N` endpoint plans
+within an explicit budget and retains selected-server zero-ratio reservations.
+For fixed assignments, the current objective is affine in ratios, so at least
+one endpoint optimum exists. This is an implementation-model observation,
+not a claim that SA-PSO is implemented or that arbitrary future models have
+the same property. Do not assume intermediate ratios must improve results.
 
 ## Review and Git Preference
 
@@ -66,3 +77,6 @@ Explain each completed development step, the reason for the changes, its test
 evidence, and known limitations to the student before any commit. The student
 reviews the changes and performs commit/push after approval. Do not perform
 commit or push automatically.
+
+The student chose a single combined commit for the previous calculations;
+do not require split staging or multiple commits for a completed development step.

@@ -13,6 +13,10 @@ doi: [10.1038/s41598-024-79464-2](https://doi.org/10.1038/s41598-024-79464-2).
 - [Simulation equations and dimensional assumptions](simulation.md)
 - [Working reproduction scope and experiment plan](reproduction_plan.md)
 - [Dataset strategy without an author-response dependency](dataset_strategy.md)
+- [Common multi-task evaluation and normalized objective](evaluation.md)
+- [Seeded synthetic inputs, parameter provenance, and JSON replay](synthetic_data.md)
+- [Small-instance exact verification, proof, and search limits](exact_search.md)
+- [11-stage development roadmap and completion criteria](roadmap.md)
 
 The code is a Python implementation of the cited equations. No author-provided
 source code has been incorporated. Worked-example inputs were created for this

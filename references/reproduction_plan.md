@@ -18,9 +18,15 @@ Build a runnable security-aware, multi-server partial-offloading baseline:
 6. At least one reference experiment, followed by an original contribution
    evaluated against the same baseline inputs and conditions.
 
-Steps 1 and 2 have numerical implementations and tests. Step 2's demo
-evaluates a supplied one-task decision. The common multi-task evaluator,
-normalization, data generation, and optimizers remain future work.
+Steps 1-4 have implementations and tests: numerical fuzzy/latency/load models,
+the common multi-task evaluator, fixed normalization and objective, and seeded
+synthetic generation with replayable JSON. Supplied-plan demos are verification
+checks. The optimizer and actual reference comparison remain future work.
+Small-instance [exact verification](exact_search.md) is now available before
+the stochastic optimizer. The numbered target list above describes scope;
+[the 11-stage roadmap](roadmap.md) is the canonical development sequence.
+See [the synthetic parameter record](synthetic_data.md) for published defaults
+versus project assumptions; the original author dataset has not been recovered.
 
 The current triangular model stores parameters and computes transformations;
 linguistic scoring bands from Table 3 and membership-function evaluation are
@@ -63,11 +69,11 @@ without the original inputs and implementation details.
   bandwidth versus data rate, and noise power versus spectral density.
 - Record per-task memory, CPU, and bandwidth allocations and assumptions
   for task data sizes, CPU work, channel gains, expert count, and weights.
-- Specify how assignments represent local-only execution and enforce the
-  selected-server semantics and capacity constraints.
-- Define fixed, positive latency and risk normalizers. Do not change them
-  between methods or derive them independently per run in a way that biases
-  the comparison.
+- Preserve the implemented one-location-per-task semantics and resource checks;
+  local-only decisions use a zero ratio and no selected server.
+- Reuse the recorded, decision-independent normalizers for all methods.
+  Their project-specific upper-bound interpretation is documented in
+  [the evaluator notes](evaluation.md), not presented as recovered author constants.
 - Verify the common evaluator and small-instance optimization against
   independently calculated or exhaustive-check results before large runs.
 - Record optimizer settings and stopping budgets; use multiple seeds and

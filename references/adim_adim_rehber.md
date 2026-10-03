@@ -243,10 +243,28 @@ python -B -m experiments.baseline.offloading_demo --link-rate-mbps 4 --ratios 0 
 
 ## 8. Henüz Ne Kaldı?
 
-Şimdiki program verdiğimiz seçenekleri değerlendiriyor. Büyük bir görev
-kümesinde uygun sunucuları ve oranları otomatik seçme kısmı henüz yazılmadı.
-Sıradaki işler ortak değerlendirme fonksiyonu, tekrarlanabilir veri üretimi,
-optimizasyon, makale deneyi ve özgün katkının karşılaştırılmasıdır.
+Şimdiki program verdiğimiz seçenekleri değerlendiriyor; ayrıca küçük bir
+senaryoda bütün seçenekleri tarayıp en uygun kararı kendisi bulabiliyor.
+Büyük görev kümeleri için makalenin arama algoritması henüz yazılmadı.
+Ortak değerlendirme fonksiyonu ve tekrarlanabilir veri üretimi mevcut.
+Üretilen görevleri, yapay uzman görüşlerini ve ağ koşullarını dosyada saklayıp
+aynı girdilerle yeniden çalıştırabiliyoruz. Küçük kesin kontrol çözücüsü de
+eklendi; sırada adaptif genetik arama, SA-PSO ile birleştirme, makale deneyi
+ve özgün katkının karşılaştırılması var.
+
+```powershell
+python -B -m experiments.baseline.exact_demo
+```
+
+Bu komut 3 görev ve 2 sunucuda 125 ihtimali kontrol eder. Sonuçtaki
+`best_objective_value` en düşük amaç değeri, `best.tasks` görev kararlarıdır.
+Mevcut modelde oran sabit sunucu seçiminde doğrusal etki yaptığından en az bir
+optimum 0/1 oranlarında bulunur; bu, ara oranların yasaklandığı anlamına gelmez.
+Ayrıntılar [kesin arama notlarında](exact_search.md).
+
+**11 aşamalı planda 6. aşamayı tamamladık.** Temel karar arayan programın
+8. aşamada, rapor ve sunum dahil teslimin 11. aşamada bitmesini hedefliyoruz.
+[Bütün aşamalar, bitiş ölçütleri ve açık konular](roadmap.md).
 
 Hocanın belirlediği özel MRR henüz yok. Senin çalışma kapsamını seçme
 yetkilendirmenle önerdiğimiz hedef, bu hesapları karar arayan bir baseline

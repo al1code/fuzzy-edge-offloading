@@ -10,6 +10,7 @@ from src.config import LoadBalanceConfig
 from src.fuzzy_security import calculate_offloading_risk, calculate_security_risk
 from src.latency import LatencyBreakdown, calculate_task_latency
 from src.load_balance import (
+    CapacityExceededError,
     ResourceVector,
     ServerLoad,
     calculate_load_variance,
@@ -174,8 +175,8 @@ def evaluate_plan(
             load = calculate_server_load(
                 capacity, allocations[server_id], config=load_config
             )
-        except ValueError as exc:
-            raise ValueError(f"server {server_id}: {exc}") from exc
+        except CapacityExceededError as exc:
+            raise CapacityExceededError(f"server {server_id}: {exc}") from exc
         server_results.append(ServerEvaluation(server_id, load))
     total_latency = fsum(task.latency.total_seconds for task in task_results)
     total_risk = fsum(task.offloading_risk for task in task_results)

@@ -24,6 +24,8 @@ The reproduced baseline will later be extended with an original experimental con
 
 For an accessible walkthrough in Turkish, start with
 [Bu projede ne yapiyoruz?](references/adim_adim_rehber.md).
+The [11-stage roadmap](references/roadmap.md) records the current stage,
+completion criteria, and the distinction between a working baseline and delivery.
 
 ## Planned Components
 
@@ -100,9 +102,11 @@ presentation/           Final presentation
 ## Current Implementation
 
 The configuration, domain models, random-number utilities, numerical fuzzy
-security subsystem, latency calculations, and server-load calculations are
-implemented. The common multi-task evaluator and optimizers are still planned
-components.
+security subsystem, latency/load calculations, common multi-task evaluator,
+normalized objective, seeded synthetic scenario generator, and bounded
+small-instance exact verification solver are implemented. Stage 6 of the
+[roadmap](references/roadmap.md) is complete; adaptive GA, SA-PSO/BOALBFS,
+and published-experiment comparison remain future work.
 
 The fuzzy subsystem accepts one triangular assessment per expert for each of
 three perspectives: task data, task type, and terminal lifecycle. It combines
@@ -114,7 +118,10 @@ calculation can be explained. This is the reference paper's weighted assessment
 method; it does not introduce a separate Mamdani/Sugeno rule base.
 
 See [the fuzzy equation mapping](references/fuzzy_security.md),
-[the simulation model and unit assumptions](references/simulation.md), and
+[the simulation model and unit assumptions](references/simulation.md),
+[the common evaluation walkthrough](references/evaluation.md),
+[synthetic data parameters and replay](references/synthetic_data.md),
+[small-instance exact verification](references/exact_search.md), and
 [the working reproduction scope and experiment plan](references/reproduction_plan.md).
 
 ## How to Run
@@ -160,9 +167,46 @@ python -B -m ruff check --no-cache src tests experiments
 python -B -m ruff format --check --no-cache src tests experiments
 ```
 
+Generate a 60-task, 3-server synthetic scenario and inspect supplied plans:
+
+```powershell
+python -B -m experiments.baseline.synthetic_demo
+```
+
+This prints a compact summary without writing a file or optimizing decisions.
+The repository includes one saved seed-42 snapshot. Replay those exact inputs:
+
+```powershell
+python -B -m experiments.baseline.synthetic_demo --input data/generated/synthetic_v1_seed42_n60_m3.json
+```
+
+Record a different scenario for later comparisons:
+
+```powershell
+python -B -m experiments.baseline.synthetic_demo --seed 7 --output data/generated/synthetic_v1_seed7_n60_m3.json
+```
+
+Snapshots retain raw expert ratings, channel gains, inputs, fixed scales,
+configuration, runtime versions, and a checksum. Existing files are never
+overwritten. Parameter defaults and undocumented-paper choices are listed in
+[the synthetic-data notes](references/synthetic_data.md).
+
 ## Reproduction Experiments
 
-To be implemented.
+Run a complete small-instance search (3 tasks, 2 servers, 125 candidates):
+
+```powershell
+python -B -m experiments.baseline.exact_demo
+```
+
+This finds an optimum of the current affine model and retains the complete
+latency/risk/load breakdown. It is a verification oracle, not BOALBFS or a
+published-experiment result. Selected-server decisions at ratio zero remain
+in the search because they still reserve resources. The default 100000-candidate
+budget rejects paper-sized exhaustive searches instead of truncating them.
+See [the proof, assumptions, and tests](references/exact_search.md).
+
+Actual reference experiments remain to be implemented and executed.
 
 ## Proposed Extension
 
@@ -183,8 +227,13 @@ To be added after the experiments are executed.
 - The security-risk condition follows Eq. (14), whose following prose reverses
   the inequality. This decision is documented in the equation notes.
 - Latency/load calculators use explicit bits/s, cycles/s, Hz, and MB inputs.
-  Published CPU and noise units remain ambiguous. A common multi-task scenario
-  and assignment evaluator must connect the existing inventory to these inputs.
+  Published CPU and noise units remain ambiguous. The generator records
+  explicit project choices rather than treating MIPS as cycles/s or dBm as W/Hz.
+- Generated expert triangles and workload distributions are numeric stress-test
+  assumptions, not real factory observations or the recovered author dataset.
+- Supplied round-robin/50% plans are checks, not optimized BOALBFS results.
+- Exact search is limited to small instances. Its endpoint-optimum guarantee
+  relies on the current affine ratio model and fixed reservations/normalizers.
 - The instructor-specific Minimum Reproduction Requirement (MRR) is not yet
   recorded. The course requirements have not all been satisfied at this stage.
 
@@ -199,6 +248,9 @@ The current implementation starts this requirement with:
 - deterministic random number utilities in `src/random_utils.py`,
 - numerical fuzzy security assessment in `src/fuzzy_security.py`,
 - unit-aware latency and resource-load calculations in `src/latency.py` and `src/load_balance.py`,
+- shared multi-task evaluation and fixed objective scales in `src/evaluation.py` and `src/objective.py`,
+- seeded scenario generation and validated JSON snapshots in `src/synthetic.py` and `src/dataset_io.py`,
+- bounded, deterministic small-instance verification in `src/optimizers/exact.py`,
 - automated tests that protect configuration validation, model constraints, and random-seed behavior.
 
 New stochastic components should receive the independent generators returned by

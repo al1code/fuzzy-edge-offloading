@@ -14,6 +14,10 @@ from src.validation import (
 )
 
 
+class CapacityExceededError(ValueError):
+    """A valid resource reservation cannot fit within a server's capacity."""
+
+
 @dataclass(frozen=True, slots=True)
 class ResourceVector:
     """CPU cycles/s, wireless bandwidth Hz, and memory MB for a resource budget.
@@ -46,7 +50,7 @@ class ServerLoad:
 def _resource_utilization(allocated: float, capacity: float, name: str) -> float:
     utilization = allocated / capacity
     if utilization > 1.0:
-        raise ValueError(f"{name} allocation exceeds capacity")
+        raise CapacityExceededError(f"{name} allocation exceeds capacity")
     return utilization
 
 
