@@ -21,12 +21,23 @@ Build a runnable security-aware, multi-server partial-offloading baseline:
 Steps 1-4 have implementations and tests: numerical fuzzy/latency/load models,
 the common multi-task evaluator, fixed normalization and objective, and seeded
 synthetic generation with replayable JSON. Supplied-plan demos are verification
-checks. The optimizer and actual reference comparison remain future work.
+checks. Adaptive genetic location search now connects to
+[SA-PSO ratio search](boalbfs.md), with unrecovered optimizer settings documented
+as project choices. A separate affine ratio reference remains for verification.
+The first selected experiment is implemented using the [recorded protocol](experiments.md).
+Its quantitative agreement with the original paper is not assumed.
 Small-instance [exact verification](exact_search.md) is now available before
 the stochastic optimizer. The numbered target list above describes scope;
 [the 11-stage roadmap](roadmap.md) is the canonical development sequence.
 See [the synthetic parameter record](synthetic_data.md) for published defaults
 versus project assumptions; the original author dataset has not been recovered.
+
+Scope is frozen at this baseline, one selected reference experiment, one
+controlled contribution, and final deliverables. Additional optimizers,
+real-data infrastructure, and a distributed simulator are not planned.
+The student requested a GUI on 2026-10-03: after experiment/contribution code,
+the last coding step will expose existing calculations and recorded results,
+without adding a separate computational model.
 
 The current triangular model stores parameters and computes transformations;
 linguistic scoring bands from Table 3 and membership-function evaluation are
@@ -36,7 +47,7 @@ assessment subsystem and which technical scope the instructor expects.
 
 ## First Reference Experiment Target
 
-The proposed first experiment is the comparison of Local, Edge, and Local-Edge
+The selected first experiment is the comparison of Local, Edge, and Local-Edge
 execution modes discussed with Fig. 2 in the
 [reference article](https://www.nature.com/articles/s41598-024-79464-2).
 

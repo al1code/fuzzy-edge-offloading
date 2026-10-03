@@ -23,9 +23,10 @@ güvenlik riski ortaya çıkar ve aynı sunucuya çok görev yığılması kayna
 tüketir. Makale süre, risk ve sunucular arasındaki yük dengesini birlikte
 değerlendiren bir yöntem öneriyor.
 
-Biz bu matematiksel yöntemi Python'da yeniden gerçekleştiriyoruz. Şu aşamada
-verdiğimiz kararı hesaplayan parçalar çalışıyor. İleride bir optimizasyon
-algoritması bu parçaları tekrar tekrar çağırarak uygun kararları arayacak.
+Biz bu matematiksel yöntemi Python'da yeniden gerçekleştiriyoruz. Kararı
+hesaplayan parçalar ve bu parçaları tekrar tekrar çağırarak uygun kararlar
+arayan iki katmanlı algoritma artık çalışıyor. Henüz gerçek makale deneyini
+tamamlamadık; bugünkü çalıştırmalar doğrulama örnekleri.
 
 ## 2. Mevcut Dosyalar Ne İşe Yarıyor?
 
@@ -38,6 +39,8 @@ algoritması bu parçaları tekrar tekrar çağırarak uygun kararları arayacak
 | `src/fuzzy_security.py` | Uzmanların belirsiz görüşlerinden görev güvenliği ve risk nasıl hesaplanır? |
 | `src/latency.py` | Verdiğimiz offloading kararında hesaplama ve veri gönderme ne kadar sürer? |
 | `src/load_balance.py` | Sunucunun CPU, bant genişliği ve belleğinin ne kadarı ayrılmıştır; sunucular ne kadar dengesiz yüklenmiştir? |
+| `src/optimizers/genetic.py` | Hangi görev hangi sunucuya gönderilsin veya yerelde kalsın? |
+| `src/optimizers/sapso.py` | Seçilen sunuculara görevin ne kadarı gönderilsin; iki karar katmanı nasıl birleşsin? |
 | `tests/` | Küçük, sonucu önceden hesaplanmış örneklerde kod doğru sonuç veriyor mu? |
 | `experiments/baseline/` | Bu parçaları birlikte nasıl çalıştırıyoruz? |
 
@@ -46,9 +49,9 @@ algoritması bu parçaları tekrar tekrar çağırarak uygun kararları arayacak
 modeller" anlamına gelir. Bu dosya bir güvenlik puanı üretmez; diğer hesaplara
 hatalı değerlerin girmesini önler. Örneğin negatif veri büyüklüğü reddedilir.
 
-`random_utils.py` aynı seed ile aynı rastgele diziyi üretir. Bugünkü küçük
-örneklerde sabit sayılar kullanıldığı için bu yardımcı henüz veri üretmiyor.
-Çok görevli deney verilerini oluştururken kullanılacak.
+`random_utils.py` aynı seed ve yazılım sürümleriyle aynı rastgele diziyi üretir.
+Sentetik verilerde ve arama algoritmalarında kullanılıyor. Veri üretiminin seed'i
+ile karar aramasının seed'i ayrıdır: girdileri sabit tutup aramayı tekrarlayabiliriz.
 
 ## 3. Fuzzy Mantık Bu Projede Nerede?
 
@@ -245,12 +248,12 @@ python -B -m experiments.baseline.offloading_demo --link-rate-mbps 4 --ratios 0 
 
 Şimdiki program verdiğimiz seçenekleri değerlendiriyor; ayrıca küçük bir
 senaryoda bütün seçenekleri tarayıp en uygun kararı kendisi bulabiliyor.
-Büyük görev kümeleri için makalenin arama algoritması henüz yazılmadı.
-Ortak değerlendirme fonksiyonu ve tekrarlanabilir veri üretimi mevcut.
+Büyük görev kümelerinde genetik sunucu seçimi ve SA-PSO oran araması birlikte
+çalışıyor. Ortak değerlendirme fonksiyonu ve tekrarlanabilir veri üretimi mevcut.
 Üretilen görevleri, yapay uzman görüşlerini ve ağ koşullarını dosyada saklayıp
 aynı girdilerle yeniden çalıştırabiliyoruz. Küçük kesin kontrol çözücüsü de
-eklendi; sırada adaptif genetik arama, SA-PSO ile birleştirme, makale deneyi
-ve özgün katkının karşılaştırılması var.
+eklendi; iki katmanlı arama da hazır. Sırada temel makale deneyi,
+tek bir özgün katkının karşılaştırılması ve rapor/sunum var.
 
 ```powershell
 python -B -m experiments.baseline.exact_demo
@@ -262,9 +265,42 @@ Mevcut modelde oran sabit sunucu seçiminde doğrusal etki yaptığından en az 
 optimum 0/1 oranlarında bulunur; bu, ara oranların yasaklandığı anlamına gelmez.
 Ayrıntılar [kesin arama notlarında](exact_search.md).
 
-**11 aşamalı planda 6. aşamayı tamamladık.** Temel karar arayan programın
-8. aşamada, rapor ve sunum dahil teslimin 11. aşamada bitmesini hedefliyoruz.
+**11 aşamalı planda 8. aşamayı tamamladık.** Temel program hazır; kalan üç aşama
+deneyler, tek bir özgün katkı ve rapor/sunum dahil teslimdir.
 [Bütün aşamalar, bitiş ölçütleri ve açık konular](roadmap.md).
+
+Genetik arama sunucu seçimlerini adaylar olarak üretir, iyi sonuç veren
+adaylardan yeni seçenekler oluşturur ve en iyi bulduğu kararı korur.
+Eski kontrol modunda oranlar doğrusal modelin 0/1 referansıyla hesaplanır.
+Yeni `boalbfs` modunda ise SA-PSO gerçekten farklı oranlar deneyerek arama yapar;
+kesin çözümü içeriden kullanmaz.
+
+```powershell
+python -B -m experiments.baseline.genetic_demo --tasks 3 --servers 2 --verify-exact
+```
+
+`best.decisions` seçilen kararlar, `history` nesiller boyunca sonuçlar,
+`exact_comparison.absolute_gap` küçük örnekte kesin çözüme farktır.
+[Bu adımın ayrıntılı açıklaması](genetic_search.md).
+
+İki katmanı birlikte çalıştırmak için:
+
+```powershell
+python -B -m experiments.baseline.genetic_demo --method boalbfs --tasks 3 --servers 2 --verify-exact
+```
+
+Genetik katmanın önerisi örneğin "ilk görev yerelde, ikinci görev sunucu 2'de"
+olabilir. SA-PSO bu öneri için ikinci görevin gönderilecek oranını arar.
+Her denemede süre, risk ve yük tekrar hesaplanır; küçük amaç değeri tercih edilir.
+Bazı geçici kötü adımları kabul etse de bulduğu en iyi sonucu kaybetmez.
+`evaluations` sunucu seçimi denemelerini, `plan_evaluations` içlerindeki toplam
+plan hesaplarını gösterir. Kısa arama kesin optimumu bulmak zorunda değildir.
+Makalenin açıklamadığı arama ayarları [ayrı varsayım notunda](boalbfs.md) kayıtlıdır.
+
+Kodun tüm satırları dersin zorunlu isteği değildir; test ve açıklama dosyaları
+da miktarı artırır. Hesaplama kapsamını sabitledik. Son isteğinle GUI'yi de
+plana aldık: deney ve katkı kodu bittikten sonra mevcut sistemi gösteren bir
+arayüz hazırlayacağız; yeni bir hesaplama motoru yazmayacağız.
 
 Hocanın belirlediği özel MRR henüz yok. Senin çalışma kapsamını seçme
 yetkilendirmenle önerdiğimiz hedef, bu hesapları karar arayan bir baseline
@@ -274,3 +310,35 @@ plan [reproduction_plan.md](reproduction_plan.md) dosyasında kayıtlıdır.
 Testlerin geçmesi formüllerin seçilmiş girdilerde doğru hesaplandığını
 gösterir. Makalenin deney sonuçlarını yeniden ürettiğimizi veya dersin bütün
 teslim koşullarını tamamladığımızı göstermez.
+
+## 9. Deneyler: Artık Neyi Ölçüyoruz?
+
+Soru şu: aynı 60 görevi cihazlarda mı, sunucularda mı, yoksa seçerek iki
+tarafta mı çalıştırmak daha uygun? Üç yönteme aynı görevleri, ağ koşullarını,
+uzman değerlendirmelerini, kapasiteyi ve puanlama ölçüsünü veriyoruz.
+
+Local bütün görevleri cihazda tutar. Edge bütün görevleri sunuculara gönderir;
+hangi sunucunun seçileceğini genetik algoritma arar. Local-Edge ise hem
+sunucuyu hem gönderilen oranı arar. Edge'in görevleri gizlice yerelde
+bırakmasına izin vermiyoruz; o artık başka bir mod olurdu.
+
+Beş farklı veri senaryosu ve her birinde üç arama tekrarı seçtik. Toplam 45
+mod kaydı var. Tek bir şanslı sonucu seçmiyoruz. Önce bir senaryonun tekrarlarını,
+sonra farklı senaryoları ortalıyoruz. Grafikteki çubuklar ortalamaları;
+hata çizgileri senaryoların değişkenliğini gösterir, başarı garantisi değildir.
+
+En küçük F, en hızlı işlem demek değildir. Süre, risk ve yük dengesini birlikte
+değerlendiriyoruz. Programın arama süresi de görevlerin hesaplanan sürelerinin
+toplamından farklı bir ölçüdür. Risk puanı gerçek saldırı olasılığı değildir.
+
+İlk deneyde ortalama F: Local `0.239262`, Edge `0.621733`, Local-Edge `0.238117`.
+Local-Edge'in yerel çalışmaya göre eşleştirilmiş ortalama kazancı yaklaşık
+`%0.47`; büyük bir üstünlük iddia etmiyoruz. Bizim risk normalizasyonumuz ve
+eşit ağırlıklarımız, tamamen Edge'in Local'den daha iyi F vermesini engelliyor.
+Bu yüzden makalenin sıralamasını veya yüzdelerini aynen elde ettiğimizi
+söyleyemeyiz. Kodu hedeflenen sonuca uydurmak yerine bu sınırı raporluyoruz.
+
+[Protokol, dosyalar, istatistikler ve sonuçların sınırları](experiments.md).
+Kaydedilen görev kararları tek tek tekrar hesaplanabilir. Sonraki iş,
+tek özgün katkının kontrollü karşılaştırması; son kod adımı da sonuçları,
+fuzzy ara hesapları ve görev dağılımını anlaşılır gösteren GUI olacak.

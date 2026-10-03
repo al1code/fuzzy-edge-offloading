@@ -5,7 +5,8 @@
 Onceki kod tek bir gorevin suresini, fuzzy guvenlik riskini ve sunucu yukunu
 hesapliyordu. Bu adim bunlari **birden fazla gorev ve sunucu icin tek bir
 degerlendiricide** birlestirir. Girdimiz bir dagitim karari, ciktimiz onun
-uygulanabilirligi ve puanidir. En iyi karari arayan algoritma henuz yoktur.
+uygulanabilirligi ve puanidir. Arama bu degerlendiriciden ayridir;
+[genetik ve SA-PSO katmanlari](boalbfs.md) onu tekrar tekrar cagirir.
 
 Ornek soru: "Birinci gorevin %40'ini birinci sunucuya, ikinci gorevin %60'ini
 ikinci sunucuya verirsek ne olur?" Artik bu soruyu tum sistem icin sorabiliriz.
@@ -128,8 +129,6 @@ Ek bir model ancak ayri ve acik bir katkida denenebilir.
 
 ## Sonraki Adim
 
-Sabit tohumlu sentetik senaryo uretimi, parametre varsayimlarinin kaydi ve
-kucuk-ornek optimizasyon dogrulamasi. Yazarin yaniti bu adimlari engellemez;
-gercek izlerden yararlanma plani [veri stratejisinde](dataset_strategy.md)
-anlatilir. Buyuk deneyler, BOALBFS, makale karsilastirmasi ve ozgun katkimiz
-henuz tamamlanmis degildir.
+Sentetik senaryo uretimi, kesin kontrol ve iki katmanli arama artik mevcut.
+Siradaki is temel makale deneyi ve kontrollu katkidir; yazarin yanitina
+bagli degildir. Guncel durum [yol haritasinda](roadmap.md) tutulur.

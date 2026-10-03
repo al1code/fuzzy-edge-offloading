@@ -16,6 +16,9 @@ doi: [10.1038/s41598-024-79464-2](https://doi.org/10.1038/s41598-024-79464-2).
 - [Common multi-task evaluation and normalized objective](evaluation.md)
 - [Seeded synthetic inputs, parameter provenance, and JSON replay](synthetic_data.md)
 - [Small-instance exact verification, proof, and search limits](exact_search.md)
+- [Adaptive genetic locations, operator equations, and interim ratio reference](genetic_search.md)
+- [Two-layer GA/SA-PSO implementation, budgets, and documented assumptions](boalbfs.md)
+- [Paired execution-mode experiment, metrics, statistics, and interpretation](experiments.md)
 - [11-stage development roadmap and completion criteria](roadmap.md)
 
 The code is a Python implementation of the cited equations. No author-provided

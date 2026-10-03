@@ -12,6 +12,7 @@ from pathlib import Path
 
 from src.validation import (
     validate_integer,
+    validate_non_negative,
     validate_positive,
     validate_unit_interval,
     validate_weights,
@@ -88,6 +89,95 @@ class LoadBalanceConfig:
             (self.cpu_weight, self.bandwidth_weight, self.memory_weight),
             "load balance weights",
         )
+
+
+@dataclass(frozen=True, slots=True)
+class GeneticSearchConfig:
+    """Upper-layer GA budget and Table 4 operator bounds.
+
+    Population size, generations, and elitism are project choices. See
+    references/genetic_search.md for the Eq. (35) interpretation and guards.
+    """
+
+    population_size: int = 30
+    generations: int = 25
+    elite_count: int = 1
+    crossover_high: float = 0.9
+    crossover_low: float = 0.6
+    mutation_high: float = 0.1
+    mutation_low: float = 0.001
+
+    def __post_init__(self) -> None:
+        validate_integer(self.population_size, "population_size", minimum=2)
+        validate_integer(self.generations, "generations")
+        validate_integer(self.elite_count, "elite_count", minimum=1)
+        if self.elite_count >= self.population_size:
+            raise ValueError("elite_count must be less than population_size")
+        for prefix in ("crossover", "mutation"):
+            high = getattr(self, f"{prefix}_high")
+            low = getattr(self, f"{prefix}_low")
+            validate_unit_interval(high, f"{prefix}_high")
+            validate_unit_interval(low, f"{prefix}_low")
+            if high <= low:
+                raise ValueError(f"{prefix}_high must exceed {prefix}_low")
+            object.__setattr__(self, f"{prefix}_high", float(high))
+            object.__setattr__(self, f"{prefix}_low", float(low))
+        for name in ("population_size", "generations", "elite_count"):
+            object.__setattr__(self, name, int(getattr(self, name)))
+
+    @property
+    def evaluation_budget(self) -> int:
+        """Number of evaluator calls; carried elites are not reevaluated."""
+
+        return self.population_size + self.generations * (
+            self.population_size - self.elite_count
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class SwarmSearchConfig:
+    """Small SA-PSO budget; defaults are documented project assumptions."""
+
+    particle_count: int = 8
+    iterations: int = 10
+    inertia_high: float = 0.9
+    inertia_low: float = 0.4
+    cognitive: float = 2.0
+    social: float = 2.0
+    velocity_limit: float = 1.0
+    initial_temperature: float = 0.05
+    cooling_rate: float = 0.95
+
+    def __post_init__(self) -> None:
+        validate_integer(self.particle_count, "particle_count", minimum=2)
+        validate_integer(self.iterations, "iterations")
+        for name in ("inertia_high", "inertia_low", "cooling_rate"):
+            validate_unit_interval(getattr(self, name), name)
+        if self.inertia_high < self.inertia_low:
+            raise ValueError("inertia_high must not be less than inertia_low")
+        validate_positive(self.cooling_rate, "cooling_rate")
+        for name in ("cognitive", "social"):
+            validate_non_negative(getattr(self, name), name)
+        for name in ("velocity_limit", "initial_temperature"):
+            validate_positive(getattr(self, name), name)
+        for name in ("particle_count", "iterations"):
+            object.__setattr__(self, name, int(getattr(self, name)))
+        for name in (
+            "inertia_high",
+            "inertia_low",
+            "cognitive",
+            "social",
+            "velocity_limit",
+            "initial_temperature",
+            "cooling_rate",
+        ):
+            object.__setattr__(self, name, float(getattr(self, name)))
+
+    @property
+    def evaluation_budget(self) -> int:
+        """One capacity precheck plus initialization and all particle updates."""
+
+        return 1 + self.particle_count * (self.iterations + 1)
 
 
 @dataclass(frozen=True, slots=True)

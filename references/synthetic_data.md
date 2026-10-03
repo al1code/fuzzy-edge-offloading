@@ -9,8 +9,8 @@ karsilastirilmasini onlemek icin uretilen gercek girdileri JSON'da sakliyoruz.
 
 Bu, bir **sayisal yontem uygulama senaryosudur**. Gercek fabrika verisi,
 yazarin ozgun veri seti veya makale sonucunun birebir tekrari degildir.
-Dagilimlar gercek is yuklerinden kalibre edilmemistir. Baseline algoritmasi
-ve yayinlanmis deney karsilastirmasi henuz tamamlanmamistir.
+Dagilimlar gercek is yuklerinden kalibre edilmemistir. Iki katmanli baseline
+artik mevcut; yayinlanmis deney karsilastirmasi henuz tamamlanmamistir.
 
 ## Dosyalar ve Akis
 

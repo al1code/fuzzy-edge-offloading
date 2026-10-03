@@ -9,8 +9,9 @@ dengesini birlikte dikkate aliyoruz. Gercek bir fabrikaya baglanmiyoruz;
 belgelenmis kosullarla hesaplama ve karar verme deneyleri yapiyoruz.
 
 Bugune kadar hesaplama motorunu ve ayni girdileri yeniden kullanma altyapisini
-kurduk. Artik kucuk orneklerde karari programin kendisi seciyor. Sonraki
-asamalarda bunu daha buyuk senaryolarda makalenin arama yontemiyle yapacagiz.
+kurduk. Artik kucuk orneklerde kesin cozum, buyuk orneklerde genetik konum
+aramasi ve buna baglanan SA-PSO oran aramasi var. Analitik oran referansi
+ayri bir kontrol modu olarak duruyor; iki katmanli aramada kullanilmiyor.
 
 Akis: girdiler -> fuzzy guvenlik -> karar adayi -> sure/risk/yuk -> amac
 degeri -> uygun karar -> kayitli deney -> karsilastirma ve yorum.
@@ -44,11 +45,11 @@ yeniden degerlendiririz. Su anki kapsam ogrencinin onayladigi calisma hedefidir.
 | 4 | Ortak senaryo ve amac degeri | Tum yontemler ayni degerlendiriciyi ve sabit normalizerleri kullanir | Hazir |
 | 5 | Tekrarlanabilir sentetik girdiler | Ham girdiler, ayarlar, surumler ve checksum ile JSON yeniden okunur | Hazir |
 | 6 | Kucuk orneklerde kesin cozum | Tum uygun uc-nokta planlari taranir; elle hesap ve ara-oran testleriyle kontrol edilir | Hazir |
-| 7 | Adaptif genetik sunucu secimi | Konum kromozomu, uygunluk, elitizm ve adaptif operatorler kayitli butceyle testlidir | Siradaki is |
-| 8 | SA-PSO ve BOALBFS butunlestirme | Oran aramasi genetik katmana baglanir; kucuk kesin cozumlerle kalite kontrolu ve buyuk senaryoda calisma testi yapilir | Planlandi |
-| 9 | Referans deneyleri | Local/Edge/Local-Edge, coklu seed, sure/risk/yuk/amac, calisma suresi, tablo/grafik ve makaleyle sinirli karsilastirma | Planlandi |
+| 7 | Adaptif genetik sunucu secimi | Konum kromozomu, uygunluk, elitizm ve adaptif operatorler kayitli butceyle testlidir | Hazir; ayri analitik kontrol modu korunur |
+| 8 | SA-PSO ve BOALBFS butunlestirme | Oran aramasi genetik katmana baglanir; kucuk kesin cozumlerle kalite kontrolu ve buyuk senaryoda calisma testi yapilir | Hazir; yayin disi ayarlar belgeli varsayimdir |
+| 9 | Referans deneyleri | Local/Edge/Local-Edge, coklu seed, sure/risk/yuk/amac, calisma suresi, tablo/grafik ve makaleyle sinirli karsilastirma | Secilen ilk deney hazir: 45 kayit; normalizasyon/yayin uyumu siniri acik |
 | 10 | Ozgun katki | Onceden tanimli soru, degisiklik ve olcutler ayni girdilerle baseline'a karsi denenir | Baseline degerlendirmesinden sonra secilecek |
-| 11 | Rapor, sunum ve teslim | Dogrulanmis literatur, 8-12 sayfalik rapor, AI bildirimi, sunum, README, temiz ortamda calistirma ve canli demo kontrolu | Planlandi |
+| 11 | GUI, rapor, sunum ve teslim | Son kod adimi olarak sonuc arayuzu; dogrulanmis literatur, 8-12 sayfalik rapor, AI bildirimi, sunum ve temiz ortam/canli demo kontrolu | GUI ogrencinin yeni istegiyle eklendi; deney ve katkidan sonra |
 
 Literatur okuma, kaynak kaydi, aciklama ve rapor notlari tum surec boyunca
 ilerler; 11. asamada ilk kez baslamaz. Son asama bunlarin tamamlanip teslim
@@ -57,13 +58,26 @@ ogrenciye aciklanir; commit ve push islemlerini ogrenci yapar.
 
 ## Ne Zaman Bitmis Sayilacak?
 
-- Su anda 6. asama tamamlandi; bu planda 5 ana asama kaldi.
-- 7 ve 8 tamamlandiginda, buyuk senaryoda otomatik karar arayan temel program
-  calisir olacak. Bu, temel uygulama hedefidir; butun ders projesinin bitmesi degildir.
-- 9 tamamlandiginda baseline deneyleri ve karsilastirma sinirlari kayitli olacak.
+- Su anda 9. asamanin secilen ilk deneyi tamamlandi; 10 ve 11 kaldi.
+- Makalenin iki katmanini birlestiren temel program belgeli varsayimlarla
+  calisir. Bu, yayinlanan deneylerin veya butun ders projesinin bitmesi degildir.
+- 9'un ilk baseline deneyleri ve karsilastirma sinirlari [kayitli](experiments.md).
+  Orijinal deneyin sayisal yuzdelerini veya tam MRR uygunlugunu elde ettigimizi
+  iddia etmiyoruz. Gerekirse hoca kapsam bildirince deney kapsami yeniden ele alinir.
 - 10 tamamlandiginda ozgun katkinin kontrollu deneyleri ve yorumu bulunacak.
 - 11 tamamlandiginda ve acik kapsam konulari kapatildiginda proje teslim
   edilebilir olacak. Bu hedef sayilar konusma veya commit sayisi tahmini degildir.
+
+Hesaplama kapsami sabit: yeni algoritma, gercek veri altyapisi veya dagitik
+simulator eklenmeyecek. Ogrenci 2026-10-03'te son kod adimi olarak bir GUI
+istedi; bu arayuz mevcut hesaplari ve kayitli deneyleri gosterecek, yeni bir
+hesaplama motoru olmayacak. Sira: temel deney -> tek ozgun katki -> GUI ->
+rapor/sunum ve teslim. 11 ana asama korunur; GUI son teslim asamasinin parcasi.
+
+GUI hedefi: gorev/sunucu kararlari, fuzzy ara degerler, sure/risk/yuk
+ayrintilari, mod karsilastirmalari ve kayitli sonuclarin anlasilir gorunumleri.
+Sentetik veri, varsayimlar ve model riskinin gercek saldiri olasiligi olmadigi
+arayuzde de kaybolmayacak. Tasarim ve uygulama deney/katki kodu bittikten sonra.
 
 ## Henuz Acik Olan Konular
 
@@ -81,7 +95,7 @@ makaleye nasil uygulanacagi, nihai MRR uygunlugu iddia edilmeden netlesmeli.
 
 Sabit konumlarda mevcut amac oranlara gore dogrusaldir. Bu nedenle en az
 bir uc-nokta optimumu vardir. [Kesin arama notlari](exact_search.md) bunu
-aciklar. SA-PSO makale yontemini yeniden gerceklestirme hedefi olarak kalir;
+aciklar. [SA-PSO](boalbfs.md) makale yonteminin belgeli yeniden uygulamasidir;
 mevcut modelde ara oranlarin mutlaka daha iyi oldugunu varsaymayacagiz.
 Bu analitik ozellik gelecekte oran aramasinin kalitesini kontrol etmekte ve
 gerekceli bir katkida kullanilabilir; katkimiz henuz secilmis degildir.

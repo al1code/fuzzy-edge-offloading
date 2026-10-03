@@ -21,9 +21,9 @@ implementation does not establish that the full MRR has been satisfied.
 | Guideline requirement | Current evidence | Remaining work |
 | --- | --- | --- |
 | 5.2-5.3: Define inputs/outputs and correctly model the fuzzy method | Equation mapping, validated triangles, expert/perspective aggregation, risk functions | Resolve linguistic-label mapping and confirm how the rule-base requirement applies to this paper's MRR |
-| 5.2-5.3: Test different inputs and maintain working code | Unit/integration tests, multi-task evaluator, generation/replay, bounded exact search with hand/grid checks | Verify adaptive GA and SA-PSO against the small-instance optimum |
-| 5.2-5.3: Reproduce at least one core experiment and compare with the paper | No published experiment reproduced yet | Build simulation, record assumptions, reproduce a selected experiment, compare outcomes |
-| 5.3 and 11: Code quality and reproducibility | Validation, independent RNGs, pinned environment, seeded inputs, parameter notes, JSON snapshots/checksums | Recorded optimizer budgets, multiple-seed experiments and results |
+| 5.2-5.3: Test different inputs and maintain working code | Unit/integration tests, generation/replay, exact hand/grid checks, GA/SA-PSO oracle comparisons | Assess multi-seed search quality beyond worked examples |
+| 5.2-5.3: Reproduce at least one core experiment and compare with the paper | Selected Fig. 2 question evaluated: 45 paired records, saved plans/inputs, component metrics, and explicit ranking/normalization limits | Instructor assessment of MRR; do not claim recovered author inputs or percentages |
+| 5.3 and 11: Code quality and reproducibility | Saved experiment inputs/plans/budgets; all 45 records replay identically except elapsed times; 9 artifact and 25 source hashes verified | Final clean-environment replay and delivery checks |
 | 6: Original contribution and fair baseline comparison | Contribution intentionally still undecided | Define a justified change, metrics, shared inputs, and controlled experiments |
 | 8-12: Technical report, references, README, and GitHub | Repository structure, source notes, README | Verified related work, 8-12 page report excluding references, figures/tables, final deliverables |
 | 14: Explain and demonstrate the implementation | Retained intermediates, adjustable worked demos, and a Turkish step-by-step guide | Explain the complete pipeline and demonstrate actual experiments |
@@ -46,20 +46,25 @@ The canonical development sequence is now the [11-stage roadmap](roadmap.md).
 Its stage numbers describe our workflow, not the course's official checkpoints.
 Stages 1-5 cover configuration, numerical fuzzy/latency/load calculations,
 the shared evaluator/objective, and reproducible synthetic data. Stage 6 adds
-bounded exact small-instance verification. All six have code and tests, subject
-to the explicitly open fuzzy scope questions above.
+bounded exact small-instance verification. Stage 7 adds adaptive genetic
+location search with a separate affine ratio reference. Stage 8 adds SA-PSO
+ratios and couples the two layers. All eight have code and tests, subject to
+the explicitly open fuzzy scope questions above.
 
-Next: stage 7, adaptive genetic location search; then stage 8, SA-PSO and
-BOALBFS integration. The working baseline is targeted at stage 8, baseline
-experiments at stage 9, contribution evaluation at stage 10, and delivery at
-stage 11. Literature/source notes and explanation continue throughout.
+Stage 9's selected first experiment has been executed under the [protocol](experiments.md).
+Stage 10 evaluates one contribution; stage 11 finishes delivery. The student
+requested a GUI as the last coding step on 2026-10-03: include it after the
+experiment/contribution code, as a view of existing calculations and results.
+No additional algorithms, real-data infrastructure, or distributed simulator
+are planned. Literature/source notes continue throughout.
 
 Parameter counts of 30 tasks and 5 servers in `ExperimentConfig` are development
 defaults. Reference experiments require explicitly selected configurations;
 Table 4 reports task-count and server-count ranges, not these smoke-test values.
 
-These completed stages are infrastructure and verification, not a completed
-reference experiment. `SyntheticScenarioConfig` explicitly selects
+Stages 1-8 are infrastructure/verification; stage 9 supplies the selected
+mode experiment under assumptions, not original-data quantitative agreement.
+`SyntheticScenarioConfig` explicitly selects
 60 tasks and 3 servers and records all additional choices. Generation does not
 repair infeasible edge assignments or wait for an author response.
 See [the current synthetic-data walkthrough](synthetic_data.md).
@@ -68,8 +73,16 @@ The [exact solver](exact_search.md) searches all `(2*M+1)**N` endpoint plans
 within an explicit budget and retains selected-server zero-ratio reservations.
 For fixed assignments, the current objective is affine in ratios, so at least
 one endpoint optimum exists. This is an implementation-model observation,
-not a claim that SA-PSO is implemented or that arbitrary future models have
-the same property. Do not assume intermediate ratios must improve results.
+not a claim that arbitrary future models have the same property. SA-PSO is
+implemented separately and does not use this oracle internally. Do not assume
+intermediate ratios must improve results.
+
+The [genetic layer](genetic_search.md) uses roulette selection (Eqs. 32-33),
+adaptive crossover (Eq. 34), literal f_l=F mutation (Eqs. 35-36), and
+documented elitism/local initialization. Its current analytical ratio
+evaluator is not SA-PSO. Do not present stage-7 outputs as BOALBFS reproduction.
+The [stage-8 integration](boalbfs.md) uses real stochastic ratio search and
+records unresolved optimizer choices as project assumptions, not author settings.
 
 ## Review and Git Preference
 

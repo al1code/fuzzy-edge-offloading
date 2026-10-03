@@ -104,9 +104,15 @@ presentation/           Final presentation
 The configuration, domain models, random-number utilities, numerical fuzzy
 security subsystem, latency/load calculations, common multi-task evaluator,
 normalized objective, seeded synthetic scenario generator, and bounded
-small-instance exact verification solver are implemented. Stage 6 of the
-[roadmap](references/roadmap.md) is complete; adaptive GA, SA-PSO/BOALBFS,
-and published-experiment comparison remain future work.
+small-instance exact verification solver, adaptive genetic location search,
+and SA-PSO ratio search are implemented. Stage 8 of the
+[roadmap](references/roadmap.md) is complete: the two layers run together under
+recorded assumptions. The affine ratio reference remains a separate verification
+mode. The selected stage-9 mode experiment has 45 recorded runs under project
+assumptions. One controlled contribution and final deliverables remain;
+quantitative reproduction of the original paper is not established.
+A GUI is planned as the last coding step, after experiment
+and contribution work, to expose existing calculations and saved results.
 
 The fuzzy subsystem accepts one triangular assessment per expert for each of
 three perspectives: task data, task type, and terminal lifecycle. It combines
@@ -121,7 +127,9 @@ See [the fuzzy equation mapping](references/fuzzy_security.md),
 [the simulation model and unit assumptions](references/simulation.md),
 [the common evaluation walkthrough](references/evaluation.md),
 [synthetic data parameters and replay](references/synthetic_data.md),
-[small-instance exact verification](references/exact_search.md), and
+[small-instance exact verification](references/exact_search.md),
+[adaptive genetic location search](references/genetic_search.md),
+[two-layer GA/SA-PSO search and its assumptions](references/boalbfs.md), and
 [the working reproduction scope and experiment plan](references/reproduction_plan.md).
 
 ## How to Run
@@ -206,7 +214,56 @@ in the search because they still reserve resources. The default 100000-candidate
 budget rejects paper-sized exhaustive searches instead of truncating them.
 See [the proof, assumptions, and tests](references/exact_search.md).
 
-Actual reference experiments remain to be implemented and executed.
+The first selected experiment compares execution modes under documented project
+assumptions; it does not recover the authors' exact experiment.
+
+Run stage-7 genetic location search on the recorded scenario:
+
+```powershell
+python -B -m experiments.baseline.genetic_demo --input data/generated/synthetic_v1_seed42_n60_m3.json
+```
+
+Compare a small run with the exact reference:
+
+```powershell
+python -B -m experiments.baseline.genetic_demo --tasks 3 --servers 2 --verify-exact
+```
+
+The reference mode selects locations using roulette selection, adaptive
+crossover/mutation, and elitism, with the affine model's endpoint ratio optimum;
+that mode is explicitly not SA-PSO or full BOALBFS. Search settings,
+the separate optimizer seed, budget, and generation history are retained in
+the JSON output. See [equation mapping and assumptions](references/genetic_search.md).
+
+Run the integrated two-layer method on the same recorded inputs:
+
+```powershell
+python -B -m experiments.baseline.genetic_demo --method boalbfs --input data/generated/synthetic_v1_seed42_n60_m3.json
+```
+
+For a small exact comparison, use `--method boalbfs --tasks 3 --servers 2 --verify-exact`.
+The integrated demo defaults to a small GA budget of 10 individuals and 5
+generations, with 8 particles and 10 iterations per feasible nonlocal candidate.
+Its JSON distinguishes GA calls from actual plan evaluations. SA-PSO genuinely
+searches ratios; it does not call the analytical oracle. Settings not recovered
+from the paper, annealing behavior, and limitations are [documented](references/boalbfs.md).
+
+Run the paired Local / Edge / Local-Edge comparison (5 dataset seeds, 3 optimizer
+seeds, 60 tasks, 3 servers):
+
+```powershell
+python -B -m experiments.baseline.mode_comparison --output results/baseline_modes_v1
+```
+
+Use a new output directory; existing runs are never overwritten. Each bundle
+contains saved input datasets, complete decisions and generation histories,
+raw/summary CSVs, a four-metric figure, settings, software versions, and checksums.
+Edge uses the same upper GA budget with full ratios and server-only genes.
+Local-Edge has extra swarm calls, so this is not an equal-compute algorithm race.
+Means first combine optimizer repeats within each dataset; error bars are sample
+SD across dataset means, not confidence intervals. See [the step-by-step experiment
+guide](references/experiments.md), especially the normalization limitation that
+prevents this interpretation from reproducing Fig. 2's Edge/Local ordering.
 
 ## Proposed Extension
 
@@ -214,12 +271,33 @@ To be determined after completion and evaluation of the baseline implementation.
 
 ## Experimental Results
 
-To be added after the experiments are executed.
+The first paired experiment used 5 dataset seeds and 3 optimizer seeds, with
+60 tasks and 3 servers. All 45 mode records were feasible.
+
+| Mode | Mean F | Sum of task latencies (s) | Total model risk | Load variance |
+| --- | ---: | ---: | ---: | ---: |
+| Local | 0.239262 | 219.9130 | 0 | 0 |
+| Edge | 0.621733 | 265.2710 | 5.550637 | 0.000130 |
+| Local-Edge | 0.238117 | 218.4440 | 0.004116 | 0.000701 |
+
+Local-Edge's mean paired objective gain is 0.469991% versus Local and 61.692433%
+versus Edge. This is exploratory evidence with project-specific inputs/scales,
+not the paper's reported improvements or a statistical significance claim.
+Lower F does not mean every component improves: risk and load variance are higher
+than Local. The normalization limitation above prevents matching Fig. 2's
+Edge/Local ordering. See [the full interpretation](references/experiments.md).
+
+Raw evidence is stored in `results/baseline_modes_v1`; a fresh replay bundle
+`results/baseline_modes_v1_replay` retains the corrected figure layout and
+reproducibility check without overwriting the first run.
+All 45 decisions, metric breakdowns, histories, and evaluation counts replayed
+exactly; elapsed search times are not expected to match. Replay artifact/source
+checksums were verified. Current verification: 649 tests and Ruff checks pass.
 
 ## Limitations
 
-- Numerical fuzzy, latency, and resource-load subsystems are available; full BOALBFS reproduction and
-  published-experiment comparison have not been completed.
+- The two-layer baseline and selected mode comparison use recorded assumptions,
+  not recovered author code/data. Quantitative agreement with the paper is not established.
 - Expert weights and the security threshold must be supplied explicitly to the
   assessment API. Demo parameters are illustrative choices.
 - The mapping of linguistic labels from Table 3 is not implemented yet; numeric
@@ -234,6 +312,14 @@ To be added after the experiments are executed.
 - Supplied round-robin/50% plans are checks, not optimized BOALBFS results.
 - Exact search is limited to small instances. Its endpoint-optimum guarantee
   relies on the current affine ratio model and fixed reservations/normalizers.
+- Genetic location search guarantees only the best observed feasible plan.
+  Its Eq. (35) mutation interpretation and initialization choices are documented;
+  the separate analytical ratio reference does not reproduce the SA-PSO layer.
+- SA-PSO keeps the best observed ratios, not a guaranteed optimum. Its temperature,
+  learning coefficients, initialization, and stopping budget are project choices.
+- The selected mode experiment is exploratory. Its fixed risk normalization and
+  equal objective weights imply full Edge has higher F than Local when risk is
+  positive. Do not claim quantitative agreement with Fig. 2 or tune results to fit it.
 - The instructor-specific Minimum Reproduction Requirement (MRR) is not yet
   recorded. The course requirements have not all been satisfied at this stage.
 
@@ -251,6 +337,8 @@ The current implementation starts this requirement with:
 - shared multi-task evaluation and fixed objective scales in `src/evaluation.py` and `src/objective.py`,
 - seeded scenario generation and validated JSON snapshots in `src/synthetic.py` and `src/dataset_io.py`,
 - bounded, deterministic small-instance verification in `src/optimizers/exact.py`,
+- seeded adaptive location search and its ratio reference in `src/optimizers/genetic.py` and `src/optimizers/locations.py`,
+- independent seeded SA-PSO ratios and two-layer integration in `src/optimizers/sapso.py`,
 - automated tests that protect configuration validation, model constraints, and random-seed behavior.
 
 New stochastic components should receive the independent generators returned by
