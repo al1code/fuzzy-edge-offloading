@@ -4,6 +4,33 @@ This note preserves the next steps across development sessions. It was checked
 against `Bulanik_Mantik_Donem_Projesi_Yonergesi.pdf` supplied by the student
 on 2026-10-03. The course document remains outside this repository.
 
+## Session Checkpoint (2026-10-05)
+
+- Last verified commit: `eff0d34`, keeping generated experiment results local.
+- Stages 1-8 and the selected stage-9 experiment are implemented. The experiment
+  has 45 records under documented assumptions, not recovered author inputs.
+- Stage 10's [ratio-cost study](ratio_comparison.md) has 30 fixed-location
+  records plus a separate 30-record full GA comparison. The first study alone
+  did not establish whole-system benefit. The follow-up measures both layers
+  without changing the core algorithms or assumptions; no global optimum,
+  scientific novelty, statistical significance or instructor approval is claimed.
+  Final checked means: F 0.238117 / 0.236411; full search 9.7044 / 0.1878 s;
+  paired F reduction 0.706169%. Risk increases; do not claim all metrics improve.
+  678 tests pass. All 30 records, controls, replay and bundle hashes checked.
+- Contribution work comes before the GUI; the GUI is the last coding step,
+  followed by the report, presentation, and delivery checks.
+- Experiment bundles under `results/` are ignored by Git and remain local;
+  only directory placeholders are tracked there. The latest contribution
+  lower-layer bundle is `results/proposed_ratios_v1_checked`; full-pipeline
+  bundles are `results/proposed_pipelines_v1` and its separate `_checked` replay.
+- The student's priority is a project they can understand: proceed in small,
+  explained steps and avoid extra features or duplicated documentation.
+
+Start a future session by reading this note, the README, and the roadmap, then
+inspect the actual checkout and Git status. Do not repeat completed stages or
+assume a new chat has the full earlier conversation. The instructor-specific
+MRR remains undecided. The next coding step is the GUI, not another optimizer.
+
 ## Scope and Current Status
 
 The project reproduces the numerical fuzzy security subsystem first, then
@@ -24,7 +51,7 @@ implementation does not establish that the full MRR has been satisfied.
 | 5.2-5.3: Test different inputs and maintain working code | Unit/integration tests, generation/replay, exact hand/grid checks, GA/SA-PSO oracle comparisons | Assess multi-seed search quality beyond worked examples |
 | 5.2-5.3: Reproduce at least one core experiment and compare with the paper | Selected Fig. 2 question evaluated: 45 paired records, saved plans/inputs, component metrics, and explicit ranking/normalization limits | Instructor assessment of MRR; do not claim recovered author inputs or percentages |
 | 5.3 and 11: Code quality and reproducibility | Saved experiment inputs/plans/budgets; all 45 records replay identically except elapsed times; 9 artifact and 25 source hashes verified | Final clean-environment replay and delivery checks |
-| 6: Original contribution and fair baseline comparison | Contribution intentionally still undecided | Define a justified change, metrics, shared inputs, and controlled experiments |
+| 6: Original contribution and fair baseline comparison | 30 fixed-location and 30 full-GA records; identical data/scales, equal upper budget, separate full-plan/endpoint costs | Carry measured, bounded benefits and increased risk into the report; no universal superiority claim |
 | 8-12: Technical report, references, README, and GitHub | Repository structure, source notes, README | Verified related work, 8-12 page report excluding references, figures/tables, final deliverables |
 | 14: Explain and demonstrate the implementation | Retained intermediates, adjustable worked demos, and a Turkish step-by-step guide | Explain the complete pipeline and demonstrate actual experiments |
 | 15-16: AI disclosure and academic integrity | README disclosure intent; examples clearly identified as synthetic | Student review/understanding and final Generative AI Usage Disclosure |
@@ -52,7 +79,8 @@ ratios and couples the two layers. All eight have code and tests, subject to
 the explicitly open fuzzy scope questions above.
 
 Stage 9's selected first experiment has been executed under the [protocol](experiments.md).
-Stage 10 evaluates one contribution; stage 11 finishes delivery. The student
+Stage 10 compares the ratio-cost change conditionally and in full GA pipelines;
+stage 11 finishes delivery. The student
 requested a GUI as the last coding step on 2026-10-03: include it after the
 experiment/contribution code, as a view of existing calculations and results.
 No additional algorithms, real-data infrastructure, or distributed simulator
@@ -93,3 +121,9 @@ commit or push automatically.
 
 The student chose a single combined commit for the previous calculations;
 do not require split staging or multiple commits for a completed development step.
+
+Before each commit, distinguish source/tests/necessary documentation from
+generated outputs that should stay local. Keep run datasets, detailed JSON,
+tables, and plots under ignored `results/` by default. Explain any additional
+local-only files before the student stages changes. Publishing selected result
+evidence later requires an explicit review; do not automatically track bundles.

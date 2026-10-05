@@ -25,8 +25,9 @@ değerlendiren bir yöntem öneriyor.
 
 Biz bu matematiksel yöntemi Python'da yeniden gerçekleştiriyoruz. Kararı
 hesaplayan parçalar ve bu parçaları tekrar tekrar çağırarak uygun kararlar
-arayan iki katmanlı algoritma artık çalışıyor. Henüz gerçek makale deneyini
-tamamlamadık; bugünkü çalıştırmalar doğrulama örnekleri.
+arayan iki katmanlı algoritma artık çalışıyor. Deneylerimizi belgeli sentetik
+girdilerle yaptık; makalenin yazarlarından alınmış veri veya aynı sayısal
+sonuçlar gibi sunmuyoruz. Elle kontrol örnekleri ile deney sonuçları ayrıdır.
 
 ## 2. Mevcut Dosyalar Ne İşe Yarıyor?
 
@@ -252,8 +253,8 @@ Büyük görev kümelerinde genetik sunucu seçimi ve SA-PSO oran araması birli
 çalışıyor. Ortak değerlendirme fonksiyonu ve tekrarlanabilir veri üretimi mevcut.
 Üretilen görevleri, yapay uzman görüşlerini ve ağ koşullarını dosyada saklayıp
 aynı girdilerle yeniden çalıştırabiliyoruz. Küçük kesin kontrol çözücüsü de
-eklendi; iki katmanlı arama da hazır. Sırada temel makale deneyi,
-tek bir özgün katkının karşılaştırılması ve rapor/sunum var.
+eklendi; iki katmanlı arama da hazır. Temel deney ve oran maliyeti çalışması
+yapıldı; aşağıdaki 9 ve 10. bölümler bunları açıklıyor.
 
 ```powershell
 python -B -m experiments.baseline.exact_demo
@@ -265,8 +266,8 @@ Mevcut modelde oran sabit sunucu seçiminde doğrusal etki yaptığından en az 
 optimum 0/1 oranlarında bulunur; bu, ara oranların yasaklandığı anlamına gelmez.
 Ayrıntılar [kesin arama notlarında](exact_search.md).
 
-**11 aşamalı planda 8. aşamayı tamamladık.** Temel program hazır; kalan üç aşama
-deneyler, tek bir özgün katkı ve rapor/sunum dahil teslimdir.
+**11 aşamalı planda 10. aşamanın seçilen deneyleri doğrulandı.** Temel program,
+ilk deney ve katkı karşılaştırması var; GUI, rapor/sunum ve teslim sırada.
 [Bütün aşamalar, bitiş ölçütleri ve açık konular](roadmap.md).
 
 Genetik arama sunucu seçimlerini adaylar olarak üretir, iyi sonuç veren
@@ -339,6 +340,65 @@ Bu yüzden makalenin sıralamasını veya yüzdelerini aynen elde ettiğimizi
 söyleyemeyiz. Kodu hedeflenen sonuca uydurmak yerine bu sınırı raporluyoruz.
 
 [Protokol, dosyalar, istatistikler ve sonuçların sınırları](experiments.md).
-Kaydedilen görev kararları tek tek tekrar hesaplanabilir. Sonraki iş,
-tek özgün katkının kontrollü karşılaştırması; son kod adımı da sonuçları,
-fuzzy ara hesapları ve görev dağılımını anlaşılır gösteren GUI olacak.
+Kaydedilen görev kararları tek tek tekrar hesaplanabilir. Deney dosyaları
+yerelde kalır; GitHub'a otomatik eklenmez.
+
+## 10. Kontrollü Katkı: Oranı Aramak mı, Hesaplamak mı?
+
+Bu sefer sunucuları değiştirmiyoruz. Aynı görev-sunucu dağılımında yalnızca
+gönderilecek oranı bulma yöntemini karşılaştırıyoruz: SA-PSO farklı oranlar
+deniyor; doğrudan yöntem her görev için 0 ve 1'in maliyetini hesaplıyor.
+Mevcut sabit kaynak modelinde maliyet orana göre doğrusal olduğu için bu yeterli.
+
+Örneğin sunucuya gönderim hem zaman kazandırabilir hem risk ekleyebilir.
+İkisinin ağırlıklı toplamı gönderimle artıyorsa oran 0, azalıyorsa 1 seçilir.
+Bu, tüm sunucu seçimleri arasındaki en iyi kararı bulduğumuz anlamına gelmez.
+
+30 kayıtta ortalama F, SA-PSO için `0.325002`, doğrudan hesap için `0.237908`.
+Ama tüm oranları sıfır seçmek bile `0.239277` veriyor: doğrudan hesabın buna
+göre kazancı yalnızca yaklaşık `%0.57`. Rastgele başlangıç ve kısa arama
+bütçesinin etkisini gizlemiyoruz. [Protokol ve sonuç sınırları](ratio_comparison.md).
+
+Bu küçük yüzde tek başına katkının tamamını anlatmıyor: önceki deney yalnızca
+sunucular sabitken oran hesabını ölçüyordu. Bu yüzden aynı deney dosyasına
+bir de iki katmanı birlikte çalıştıran karşılaştırma ekledik. Yeni bir motor
+veya algoritma ailesi yazmadık.
+
+İki çözüm de 100 sunucu-dağıtımı adayı değerlendiriyor. İlki her adayın
+gönderim oranlarını SA-PSO ile arıyor; ikincisi doğrusal modelden hesaplıyor.
+İkinci yöntemin puanları farklı olduğundan GA'nın ileride seçtiği sunucular
+da farklı olabilir. Aynı seed, bütün adayların aynı olmasını garanti etmez.
+
+15 eşleşmede 12 daha iyi, 3 eşit sonuç var. Ortalama F `0.238117`'den
+`0.236411`'e indi; eşleştirilmiş ortalama düşüş yaklaşık `%0.71`.
+Ortalama görev süreleri toplamı `218.44` saniyeden `216.76` saniyeye indi;
+bu, bilgisayarda programın çalışma süresi değil, görev sürelerinin modeldeki
+toplamıdır. Yük daha dengeli; fakat model riskinin ortalaması biraz daha
+yüksek. "Her şeyi iyileştirdik" demiyoruz.
+
+Asıl kazanç karar aramasında: son ölçümde iki katmanın birlikte araması
+ortalama `9.70` saniye yerine `0.19` saniye sürdü, yaklaşık `52` kat fark.
+Bu, görevlerin 52 kat hızlı çalıştığı veya programın her bölümünün hızlandığı
+anlamına gelmez. Aynı girdilerde uygun bir karar aramak için daha az hesap
+yapıyoruz. Veri/fuzzy üretimi ve dosya yazma bu zaman ölçümüne dahil değil.
+Bu yüzden katkıyı yalnızca küçük kalite yüzdesiyle tarif etmiyoruz; hesaplama
+maliyetini düşüren, sonuçları kontrol edilmiş bir mühendislik değişikliği.
+
+## 11. Dinleyiciye Nasıl Anlatacağım?
+
+1. Problem: cihazın işi sunucuya göndermesi her zaman kazançlı değildir;
+   iletim zaman alır, güvenlik riski ve sunucu yükü oluşur.
+2. Bulanık bölüm: uzmanların belirsiz görüşlerini üçgensel sayılarla temsil
+   edip görev için güvenlik/risk puanı hesaplarız. Bu, saldırı tahmini değildir.
+3. Makale yöntemi: GA sunucuyu, SA-PSO gönderilecek oranı arar;
+   süre, risk ve yük birlikte puanlanır.
+4. Bizim değişikliğimiz: sabit kaynak modelinde oran maliyeti doğrusal olduğu
+   için oranı aramak yerine iki uç noktadan hesaplarız. Sunucu araması kalır.
+5. Kanıt: aynı görevler ve aynı GA bütçesiyle iki çözümü karşılaştırırız;
+   karar kalitesi, arama süresi ve artan risk dahil sonuçları gösteririz.
+6. Sınır: veriler sentetik, model varsayımları belgeli; bütün fabrikalarda
+   üstünlük veya küresel optimum iddiası yok. Yeni bir fuzzy yöntem icat etmedik.
+
+Son kod adımı olan GUI bu sırayı izleyecek: tek görev/fuzzy hesabı, görev ve
+sunucu kararları, ardından karşılaştırma. Mevcut motoru gösterecek; rapor,
+literatür, AI bildirimi ve temiz ortam kontrolü ayrıca tamamlanacak.

@@ -20,7 +20,10 @@ Scientific Reports, 2024.
 
 The objective of this project is to reproduce the core components of the task-offloading method proposed in the reference paper, with particular emphasis on fuzzy security assessment, multi-server load balancing, and partial task offloading.
 
-The reproduced baseline will later be extended with an original experimental contribution and evaluated through controlled experiments.
+The reproduced baseline is accompanied by one cost-reduction study: replace
+SA-PSO ratio search with the model's analytical endpoint calculation. A fixed-
+location experiment isolates the change; a full GA comparison measures its
+effect on the complete decision process.
 
 For an accessible walkthrough in Turkish, start with
 [Bu projede ne yapiyoruz?](references/adim_adim_rehber.md).
@@ -109,7 +112,8 @@ and SA-PSO ratio search are implemented. Stage 8 of the
 [roadmap](references/roadmap.md) is complete: the two layers run together under
 recorded assumptions. The affine ratio reference remains a separate verification
 mode. The selected stage-9 mode experiment has 45 recorded runs under project
-assumptions. One controlled contribution and final deliverables remain;
+assumptions. Stage 10 includes 30 fixed-location records and a separate
+30-record full-pipeline comparison. The GUI and final deliverables remain;
 quantitative reproduction of the original paper is not established.
 A GUI is planned as the last coding step, after experiment
 and contribution work, to expose existing calculations and saved results.
@@ -270,7 +274,43 @@ prevents this interpretation from reproducing Fig. 2's Edge/Local ordering.
 
 ## Proposed Extension
 
-To be determined after completion and evaluation of the baseline implementation.
+The selected contribution investigates whether the existing affine ratio
+calculation can reduce search cost. The first comparison fixes round-robin
+server selections; the second compares complete GA+SA-PSO and GA+Analytical
+pipelines. Both receive identical tasks, fuzzy risks, capacities, normalization,
+and upper GA settings, but their later server choices can differ.
+No calculation engine was changed and no new optimizer family was introduced.
+
+```powershell
+python -B -m experiments.proposed.ratio_comparison --output results/proposed_ratios_v1_checked
+```
+
+Use a new directory if that output already exists. The recorded comparison uses
+5 datasets and 3 optimizer repeats: mean F is 0.325002 for SA-PSO and 0.237908
+for analytical ratios. Against the simpler zero-ratio control (F=0.239277), the
+analytical mean-F reduction is only about 0.572%. This is a conditional ratio
+study, not an end-to-end BOALBFS improvement or global location optimum.
+Results stay local under ignored `results/`. See [the protocol, cost accounting,
+initialization caveat, and results](references/ratio_comparison.md).
+
+Run the full comparison with the same 100-candidate GA budget per method:
+
+```powershell
+python -B -m experiments.proposed.ratio_comparison --scope pipeline --output results/proposed_pipelines_v1_checked
+```
+
+Use a new output directory. This is an equal-upper-budget experiment, not an
+equal-compute comparison. Record actual full-plan calls AND analytical task
+endpoint calculations; total solver time includes both search layers.
+In the full comparison, mean F is 0.238117 for GA+SA-PSO and 0.236411 for
+GA+Analytical. The mean paired objective reduction is 0.706169% (12 better,
+3 equal, none worse); lower aggregate F does not mean every component improves.
+Mean total decision-search time is 9.7044 s versus 0.1878 s on this machine,
+about 51.7 times lower under these settings. This excludes dataset/fuzzy
+generation, serialization and GUI work; it is not actual task execution time.
+Mean latency and load variance decrease, while mean model risk increases from
+0.004116 to 0.009375. This is a cost optimization under recorded synthetic
+assumptions, not a new fuzzy algorithm or global assignment optimum.
 
 ## Experimental Results
 
@@ -296,7 +336,7 @@ Raw evidence is stored locally, outside Git tracking, in
 reproducibility check without overwriting the first run.
 All 45 decisions, metric breakdowns, histories, and evaluation counts replayed
 exactly; elapsed search times are not expected to match. Replay artifact/source
-checksums were verified. Current verification: 649 tests and Ruff checks pass.
+checksums were verified. Current verification: 678 tests and Ruff checks pass.
 
 ## Limitations
 
@@ -326,6 +366,10 @@ checksums were verified. Current verification: 649 tests and Ruff checks pass.
   positive. Do not claim quantitative agreement with Fig. 2 or tune results to fit it.
 - The instructor-specific Minimum Reproduction Requirement (MRR) is not yet
   recorded. The course requirements have not all been satisfied at this stage.
+- The first contribution experiment holds round-robin locations fixed; the
+  follow-up measures both search layers under the same upper GA budget.
+  SA-PSO uses random initial particles, not the zero-ratio capacity check as its
+  incumbent. Its comparison gap must not be generalized to all search settings.
 
 ## Reproducibility
 

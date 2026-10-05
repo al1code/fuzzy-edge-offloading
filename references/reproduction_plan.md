@@ -92,12 +92,28 @@ without the original inputs and implementation details.
 
 ## Original Contribution
 
-Select the contribution after the baseline has been evaluated. Plausible
-directions include comparing fuzzy transformation choices, sensitivity to
-expert/perspective weights, or robustness to noisy expert opinions. Choose a
-specific question and metrics before running the comparison, and reuse the
-same scenarios. A negative or neutral result is reportable if analyzed fairly.
+The selected contribution studies replacing SA-PSO ratio search with the
+verified analytical endpoint calculation. A fixed-location experiment first
+isolates the lower layer; a full GA pipeline comparison then measures the
+same change in the complete decision process. This fits
+the guideline's computational-cost/ablation direction without adding another
+optimizer family. The question and metrics were recorded before the experiment;
+an additional zero-ratio control was documented after the initial run.
+
+The [protocol and interpretation](ratio_comparison.md) retain 30 records across
+5 datasets and 3 search repeats in the lower-layer study. The analytical mean F
+is 0.237908; the simpler zero-ratio control is 0.239277. This alone does not
+establish a useful full-system contribution. The full comparison keeps the
+same 100-candidate GA budget, inputs and objective, but records actual full-plan
+and endpoint work separately: equal upper budgets are not equal compute.
+No global location optimum, statistical significance, instructor approval,
+or scientific novelty is claimed. Only measured, bounded benefits may be stated.
+The checked full comparison has mean F 0.238117 versus 0.236411 and total
+search time 9.7044 versus 0.1878 seconds on this machine. Mean model risk
+increases even though latency/load and aggregate F improve. The comparison
+and replay support a bounded computational-cost contribution, not a new
+fuzzy method or proof of superiority under all search settings.
 
 Current tests and worked demos support code verification and explanation.
-Published-experiment reproduction, final comparative results, the technical
-report, presentation, and AI disclosure remain separate deliverables.
+Quantitative agreement with published figures remains unestablished. The
+technical report, presentation, AI disclosure and final delivery checks remain.
