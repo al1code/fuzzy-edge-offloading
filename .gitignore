@@ -59,6 +59,13 @@ dist/
 *.bak
 
 # -------------------------
+# Generated experiment outputs (kept locally)
+# -------------------------
+/results/**
+!/results/**/
+!/results/**/.gitkeep
+
+# -------------------------
 # Author-provided/private data
 # -------------------------
 data/author_provided/*

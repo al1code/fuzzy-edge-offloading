@@ -258,6 +258,9 @@ python -B -m experiments.baseline.mode_comparison --output results/baseline_mode
 Use a new output directory; existing runs are never overwritten. Each bundle
 contains saved input datasets, complete decisions and generation histories,
 raw/summary CSVs, a four-metric figure, settings, software versions, and checksums.
+Generated files under `results/` are kept locally and ignored by Git; directory
+placeholders remain tracked. A fresh clone must generate its own result bundle
+with the command above. Selected evidence can be published later.
 Edge uses the same upper GA budget with full ratios and server-only genes.
 Local-Edge has extra swarm calls, so this is not an equal-compute algorithm race.
 Means first combine optimizer repeats within each dataset; error bars are sample
@@ -287,7 +290,8 @@ Lower F does not mean every component improves: risk and load variance are highe
 than Local. The normalization limitation above prevents matching Fig. 2's
 Edge/Local ordering. See [the full interpretation](references/experiments.md).
 
-Raw evidence is stored in `results/baseline_modes_v1`; a fresh replay bundle
+Raw evidence is stored locally, outside Git tracking, in
+`results/baseline_modes_v1`; a fresh replay bundle
 `results/baseline_modes_v1_replay` retains the corrected figure layout and
 reproducibility check without overwriting the first run.
 All 45 decisions, metric breakdowns, histories, and evaluation counts replayed
