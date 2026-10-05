@@ -6,7 +6,9 @@ on 2026-10-03. The course document remains outside this repository.
 
 ## Session Checkpoint (2026-10-05)
 
-- Last verified commit: `eff0d34`, keeping generated experiment results local.
+- Last verified local checkpoint: `23f4d72`, the full analytical-ratio comparison.
+  Its author is the student's existing Git identity; local `origin/main` matches.
+  GUI work comes after that checkpoint and has not been committed by the assistant.
 - Stages 1-8 and the selected stage-9 experiment are implemented. The experiment
   has 45 records under documented assumptions, not recovered author inputs.
 - Stage 10's [ratio-cost study](ratio_comparison.md) has 30 fixed-location
@@ -17,8 +19,12 @@ on 2026-10-03. The course document remains outside this repository.
   Final checked means: F 0.238117 / 0.236411; full search 9.7044 / 0.1878 s;
   paired F reduction 0.706169%. Risk increases; do not claim all metrics improve.
   678 tests pass. All 30 records, controls, replay and bundle hashes checked.
-- Contribution work comes before the GUI; the GUI is the last coding step,
-  followed by the report, presentation, and delivery checks.
+- The optional [Turkish GUI](gui.md) now calls the existing core and experiment
+  programs. Five views cover inputs, fuzzy calculations, task/server details,
+  solver comparison and saved/new multi-seed experiments. It is the last planned
+  coding step; the report, presentation, and final delivery checks remain.
+  Full verification: 719 tests pass, including 41 GUI adapter/interaction tests;
+  Ruff checks pass. GUI dependencies are optional and separately pinned.
 - Experiment bundles under `results/` are ignored by Git and remain local;
   only directory placeholders are tracked there. The latest contribution
   lower-layer bundle is `results/proposed_ratios_v1_checked`; full-pipeline
@@ -29,7 +35,8 @@ on 2026-10-03. The course document remains outside this repository.
 Start a future session by reading this note, the README, and the roadmap, then
 inspect the actual checkout and Git status. Do not repeat completed stages or
 assume a new chat has the full earlier conversation. The instructor-specific
-MRR remains undecided. The next coding step is the GUI, not another optimizer.
+MRR remains undecided. Continue with student review/demo understanding and final
+deliverables, not another optimizer or a separate simulation framework.
 
 ## Scope and Current Status
 
@@ -81,7 +88,7 @@ the explicitly open fuzzy scope questions above.
 Stage 9's selected first experiment has been executed under the [protocol](experiments.md).
 Stage 10 compares the ratio-cost change conditionally and in full GA pipelines;
 stage 11 finishes delivery. The student
-requested a GUI as the last coding step on 2026-10-03: include it after the
+requested a GUI as the last coding step on 2026-10-03. It now follows the
 experiment/contribution code, as a view of existing calculations and results.
 No additional algorithms, real-data infrastructure, or distributed simulator
 are planned. Literature/source notes continue throughout.

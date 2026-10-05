@@ -19,6 +19,13 @@ ve `results/proposed_pipelines_v1*` altindaki girdiler, CSV'ler, manifest ve
 grafikler yerelde kalir. Cekirdek `src/` ve bagimliliklar bu adimda degismedi.
 Guncel devam notu [proje baglaminda](project_context.md) tutulur.
 
+Tam GA karsilastirmasi `23f4d72` yerel checkpoint'inde, ogrencinin mevcut Git
+kimligiyle kayitlidir. GUI bunun uzerine ayri, henuz commit edilmemis bir
+gelistirme adimidir: `app.py`, `gui/`, `.streamlit/config.toml`,
+`requirements-gui.txt`, GUI testleri ve gerekli rehberler commit'e uygundur.
+`results/gui_*`, test gecicileri, `.venv/` ve grafik onbellegi yerelde kalir.
+Git yazari/katkida bulunan bilgileri degistirilmez; ortak-yazar etiketi eklenmez.
+
 Her commit oncesi asistan degisiklikleri ve test durumunu aciklar; ayrica hangi
 dosyalarin gerekli oldugunu, hangilerinin yalnizca yerelde kalmasi gerektigini
 belirtir. Ayrintili deney girdileri, JSON kayitlari, tablo ve grafikler varsayilan

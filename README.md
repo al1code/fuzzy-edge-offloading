@@ -30,7 +30,7 @@ For an accessible walkthrough in Turkish, start with
 The [11-stage roadmap](references/roadmap.md) records the current stage,
 completion criteria, and the distinction between a working baseline and delivery.
 
-## Planned Components
+## Implemented Components
 
 - Synthetic industrial task generation
 - Fuzzy security assessment
@@ -46,6 +46,7 @@ completion criteria, and the distinction between a working baseline and delivery
 - Baseline reproduction experiments
 - Proposed extension
 - Comparative experimental evaluation
+- Turkish interactive dashboard and saved-experiment inspection
 
 ## Dataset
 
@@ -85,11 +86,69 @@ instead of the unpinned development requirements:
 python -m pip install -r requirements-lock.txt
 ```
 
+## Interactive Dashboard
+
+### Kendi Bilgisayarinda Acma (Windows)
+
+PowerShell'de proje klasorune gir. GUI bagimliliklari daha once kurulduysa
+yalnizca su komutlar yeterlidir; sanal ortami etkinlestirmek gerekmez:
+
+```powershell
+cd "C:\Users\alike\OneDrive\Masaüstü\fuzzy-security-task-offloading"
+.\.venv\Scripts\python.exe -m streamlit run app.py
+```
+
+Tarayicida [GUI'yi ac](http://127.0.0.1:8501). Terminali sunum boyunca acik tut;
+durdurmak icin `Ctrl+C` kullan. Port doluysa son komuta `--server.port 8502`
+ekle ve `http://127.0.0.1:8502` adresini ac.
+
+### Baska Bilgisayarda Ilk Kurulum (Windows)
+
+Kayitli ortam Python **3.14.5 / Windows** ile dogrulandi. Python 3.14 ve Git
+kurulu bir bilgisayarda:
+
+```powershell
+git clone https://github.com/al1code/fuzzy-security-task-offloading.git
+cd fuzzy-security-task-offloading
+py -3.14 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-gui.txt
+.\.venv\Scripts\python.exe -m streamlit run app.py
+```
+
+Git yerine GitHub'dan ZIP indirip acmak da mumkundur; `app.py` ve
+`requirements-gui.txt` bulunan klasorde son uc komutu uygula. `.venv`
+klasorunu baska bilgisayardan kopyalama. Ilk bagimlilik kurulumu internet
+gerektirir; kurulumdan sonra temel GUI demosu yerel olarak calisir.
+GUI dosyalarinin paylasilan depo surumunde bulunmasi gerekir.
+
+### Kisa Kullanim
+
+1. Solda **Gorev: 3**, **Sunucu: 2**, **Veri seed: 42**, **Guvenlik esigi: 0.60**
+   sec ve **Senaryoyu olustur** dugmesine bas.
+2. **Bulanik Guvenlik** ekraninda uzman goruslerinden guvenlik puani ve model
+   riskinin nasil olustugunu incele.
+3. **Gorev ve Sunucular** ekraninda `task-0001` / `edge-001` icin gonderim
+   oranini 0, 50, 100 yap; cihaz, iletim ve sunucu surelerini karsilastir.
+   Bu surgu yalnizca tek gorevi inceler, tam plani degistirmez.
+4. **Cozum Karsilastirmasi** ekraninda yontemleri secip **Secili cozumleri
+   calistir** dugmesine bas. Daha dusuk `F` tercih edilir; basari yuzdesi degildir.
+5. **Deney Kayitlari** ekraninda kayitli deneyleri incele. `results/` Git'te
+   tutulmadigi icin yeni bilgisayarda kayit olmamasi normaldir.
+
+Arayuzde bu etiketler Turkce karakterlerle gosterilir. Veriler sentetiktir;
+model riski gercek saldiri olasiligi degildir. GUI gercek cihazlara is gondermez.
+Kurulum sorunlari, degerlerin anlami, ornek sonuclar ve canli sunum hazirligi
+icin [Turkce GUI/demo rehberine](references/gui.md) bak.
+GUI mevcut cekirdegi kullanir; yeni bir optimizasyon motoru eklemez.
+Komut satiri deneyleri istege bagli GUI kurulmadan da calisir.
+
 ## Repository Structure
 
 ```text
 src/                    Core implementation
 src/optimizers/         Optimization algorithms
+app.py                  Local Streamlit entry point
+gui/                    Dashboard views, figures and core adapters
 data/generated/         Reproducibly generated synthetic datasets
 data/author_provided/   Author-provided data, if permission allows local use
 experiments/baseline/   Reference-method experiments
@@ -113,10 +172,11 @@ and SA-PSO ratio search are implemented. Stage 8 of the
 recorded assumptions. The affine ratio reference remains a separate verification
 mode. The selected stage-9 mode experiment has 45 recorded runs under project
 assumptions. Stage 10 includes 30 fixed-location records and a separate
-30-record full-pipeline comparison. The GUI and final deliverables remain;
+30-record full-pipeline comparison. The GUI now exposes these existing models
+and experiments; the report, presentation and final delivery checks remain;
 quantitative reproduction of the original paper is not established.
-A GUI is planned as the last coding step, after experiment
-and contribution work, to expose existing calculations and saved results.
+The GUI is the final planned coding step, not a replacement for the report or
+instructor-specific MRR confirmation.
 
 The fuzzy subsystem accepts one triangular assessment per expert for each of
 three perspectives: task data, task type, and terminal lifecycle. It combines

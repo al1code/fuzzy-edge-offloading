@@ -50,7 +50,7 @@ yeniden degerlendiririz. Su anki kapsam ogrencinin onayladigi calisma hedefidir.
 | 8 | SA-PSO ve BOALBFS butunlestirme | Oran aramasi genetik katmana baglanir; kucuk kesin cozumlerle kalite kontrolu ve buyuk senaryoda calisma testi yapilir | Hazir; yayin disi ayarlar belgeli varsayimdir |
 | 9 | Referans deneyleri | Local/Edge/Local-Edge, coklu seed, sure/risk/yuk/amac, calisma suresi, tablo/grafik ve makaleyle sinirli karsilastirma | Secilen ilk deney hazir: 45 kayit; normalizasyon/yayin uyumu siniri acik |
 | 10 | Ozgun katki | Onceden tanimli soru, degisiklik ve olcutler ayni girdilerle baseline'a karsi denenir | Oran maliyeti calismasi: 30 sabit-konum ve ayri 30 tam-GA kaydi; sinirlar raporlanir |
-| 11 | GUI, rapor, sunum ve teslim | Son kod adimi olarak sonuc arayuzu; dogrulanmis literatur, 8-12 sayfalik rapor, AI bildirimi, sunum ve temiz ortam/canli demo kontrolu | GUI ogrencinin yeni istegiyle eklendi; deney ve katkidan sonra |
+| 11 | GUI, rapor, sunum ve teslim | Son kod adimi olarak sonuc arayuzu; dogrulanmis literatur, 8-12 sayfalik rapor, AI bildirimi, sunum ve temiz ortam/canli demo kontrolu | GUI mevcut motorla uygulandi; rapor/sunum ve nihai teslim kontrolleri acik |
 
 Literatur okuma, kaynak kaydi, aciklama ve rapor notlari tum surec boyunca
 ilerler; 11. asamada ilk kez baslamaz. Son asama bunlarin tamamlanip teslim
@@ -61,7 +61,8 @@ ogrenciye aciklanir; commit ve push islemlerini ogrenci yapar.
 
 - 9. asamanin secilen ilk deneyi ve 10'un sabit-konum deneyi yapildi;
   katkinin iki arama katmanindaki etkisi de ayri tam-GA deneyiyle kontrol edildi.
-  Sonraki kod hedefi aciklayici GUI; rapor/sunum ve teslim kontrolleri ayridir.
+  Aciklayici [GUI](gui.md) mevcut motorla uygulandi; rapor/sunum ve teslim
+  kontrolleri ayridir. Yeni algoritma planlamiyoruz.
 - Makalenin iki katmanini birlestiren temel program belgeli varsayimlarla
   calisir. Bu, yayinlanan deneylerin veya butun ders projesinin bitmesi degildir.
 - 9'un ilk baseline deneyleri ve karsilastirma sinirlari [kayitli](experiments.md).
@@ -82,7 +83,7 @@ rapor/sunum ve teslim. 11 ana asama korunur; GUI son teslim asamasinin parcasi.
 GUI hedefi: gorev/sunucu kararlari, fuzzy ara degerler, sure/risk/yuk
 ayrintilari, mod karsilastirmalari ve kayitli sonuclarin anlasilir gorunumleri.
 Sentetik veri, varsayimlar ve model riskinin gercek saldiri olasiligi olmadigi
-arayuzde de kaybolmayacak. Tasarim ve uygulama deney/katki kodu bittikten sonra.
+arayuzde de korunur. Uygulama ve canli demo akisi [GUI rehberinde](gui.md).
 
 ## Henuz Acik Olan Konular
 
