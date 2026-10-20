@@ -13,15 +13,18 @@ import streamlit as st
 from gui import charts
 from gui.services import (
     METHODS,
+    UNCERTAINTY_MAMDANI_METHOD,
     bundle_statistics,
     context_key,
     evaluate_manual,
     export_run,
     list_bundles,
     load_bundle,
+    mamdani_policy_for_dataset,
     plan_rows,
     restore_bundle_run,
     run_method,
+    run_uncertainty_mamdani,
     summary_row,
     update_assessment,
 )
@@ -35,6 +38,10 @@ from src.config import (
     SyntheticScenarioConfig,
 )
 from src.dataset_io import dataset_fingerprint, dataset_from_json, dataset_to_json
+from src.fuzzy_controller import (
+    RULE_BASE,
+    evaluate_uncertainty_aware_offloading,
+)
 from src.fuzzy_security import (
     SecurityPerspectives,
     assess_security,
@@ -53,7 +60,9 @@ VIEWS = (
     "G\u00f6rev ve Sunucular",
     "\u00c7\u00f6z\u00fcm Kar\u015f\u0131la\u015ft\u0131rmas\u0131",
     "Deney Kay\u0131tlar\u0131",
+    "Mamdani Katk\u0131s\u0131",
 )
+COMPARISON_METHODS = METHODS + (UNCERTAINTY_MAMDANI_METHOD,)
 LABELS = {
     "task_id": "G\u00f6rev",
     "server": "Sunucu",
@@ -81,6 +90,7 @@ METHOD_LABELS = {
     "BOALBFS": "BOALBFS / GA + SA-PSO",
     "Analytical": "Katk\u0131 / GA + analitik oran",
     "Exact": "Kesin kontrol / k\u00fc\u00e7\u00fck senaryo",
+    UNCERTAINTY_MAMDANI_METHOD: "Önerilen / belirsizlik-duyarlı Mamdani",
 }
 PERSPECTIVES = {
     "task_data": "G\u00f6rev verisi",
@@ -650,6 +660,213 @@ def fuzzy_view(data):
     )
 
 
+def mamdani_view(data, run, settings):
+    """Show the project's proposed uncertainty-aware decision layer live."""
+
+    _, load, genetic, swarm, seed = settings
+    st.subheader("Özgün katkı: belirsizlik-duyarlı Mamdani denetleyicisi")
+    st.caption(
+        "Makaledeki üçgensel uzman değerlendirmesi ve BOALBFS baseline olarak korunur. "
+        "Bu ek katman, aynı güvenlik puanındaki iki görevin değerlendirme "
+        "belirsizliği farklıysa aynı aktarım oranına izin vermemesini sağlar."
+    )
+    st.info(
+        "Bu ekran makalenin yeniden üretimi değildir: projeye eklenen Type-1 "
+        "Mamdani uzantısını gösterir. AND=min, kural birleştirme=max ve "
+        "durulaştırma=centroid uygulanır."
+    )
+
+    index = st.selectbox(
+        "İncelenen görev",
+        range(len(data.scenario.tasks)),
+        format_func=lambda i: data.scenario.tasks[i].task.task_id,
+        key=f"mamdani_task_{st.session_state.epoch}",
+    )
+    policy = mamdani_policy_for_dataset(data)
+    task_policy = policy[index]
+    task = data.scenario.tasks[index]
+    task_id = task.task.task_id
+
+    a, b, c = st.columns(3)
+    a.metric("Makale güvenlik puanı S", number(task_policy.security_level))
+    b.metric(
+        "Değerlendirme belirsizliği U", number(task_policy.assessment_uncertainty)
+    )
+    c.metric(
+        "Veri kaynaklı izinli üst oran", f"%{100 * task_policy.allowed_offloading_ratio:.2f}"
+    )
+    st.caption(
+        "U, uzmanlar ağırlıklandırıldıktan sonra üç perspektifteki üçgen "
+        "genişliklerinin ortalamasıdır. Saldırı olasılığı veya uzmanlar arası "
+        "istatistiksel anlaşmazlık olarak yorumlanmaz."
+    )
+    st.latex(
+        r"U_i=\frac{1}{3}\sum_{k=1}^{3}(\overline{s}_{ik}-\underline{s}_{ik}),"
+        r"\qquad 0\le x_i\le \bar{x}_i"
+    )
+
+    st.markdown("#### Canlı 'ne olurdu?' denetimi")
+    left, right = st.columns(2)
+    live_security = left.slider(
+        "Güvenlik puanı S",
+        0.0,
+        1.0,
+        float(task_policy.security_level),
+        0.01,
+        key=f"mamdani_security_{st.session_state.epoch}_{index}",
+    )
+    live_uncertainty = right.slider(
+        "Belirsizlik U",
+        0.0,
+        1.0,
+        float(task_policy.assessment_uncertainty),
+        0.01,
+        key=f"mamdani_uncertainty_{st.session_state.epoch}_{index}",
+    )
+    decision = evaluate_uncertainty_aware_offloading(
+        live_security, live_uncertainty
+    )
+    st.metric(
+        "Canlı izinli en yüksek offloading oranı x̄",
+        f"%{100 * decision.allowed_offloading_ratio:.2f}",
+        help="Önerilen BOALBFS bu görev için yalnızca 0 ile bu üst sınır arasında arar.",
+    )
+
+    input_records = [
+        {
+            "Değişken": "Güvenlik S",
+            "Küme": {"low": "Düşük", "medium": "Orta", "high": "Yüksek"}[d.label],
+            "Üyelik derecesi": d.value,
+        }
+        for d in decision.security_memberships
+    ] + [
+        {
+            "Değişken": "Belirsizlik U",
+            "Küme": {"low": "Düşük", "medium": "Orta", "high": "Yüksek"}[d.label],
+            "Üyelik derecesi": d.value,
+        }
+        for d in decision.uncertainty_memberships
+    ] + [
+        {
+            "Değişken": "Çıktı x̄",
+            "Küme": {
+                "restricted": "Kısıtlı",
+                "low": "Düşük",
+                "medium": "Orta",
+                "high": "Yüksek",
+            }[d.label],
+            "Üyelik derecesi": d.value,
+        }
+        for d in decision.output_memberships
+    ]
+    st.altair_chart(
+        charts.bars(
+            input_records,
+            "Küme",
+            "Üyelik derecesi",
+            group="Değişken",
+            y_title="Üyelik derecesi",
+        ),
+        width="stretch",
+    )
+    table(input_records)
+
+    label = {
+        "low": "Düşük",
+        "medium": "Orta",
+        "high": "Yüksek",
+        "restricted": "Kısıtlı",
+    }
+    st.markdown("#### Çalışan Mamdani kuralları")
+    table(
+        [
+            {
+                "Eğer güvenlik": label[rule.security_label],
+                "ve belirsizlik": label[rule.uncertainty_label],
+                "ise izin": label[rule.output_label],
+                "Kural gücü (min)": rule.strength,
+            }
+            for rule in decision.active_rules
+        ]
+    )
+    with st.expander("Dokuz kuralın tamamı"):
+        table(
+            [
+                {
+                    "Güvenlik S / Belirsizlik U": label[security],
+                    **{
+                        label[uncertainty]: label[RULE_BASE[(security, uncertainty)]]
+                        for uncertainty in ("low", "medium", "high")
+                    },
+                }
+                for security in ("low", "medium", "high")
+            ]
+        )
+        st.caption(
+            "Üyelik fonksiyonları: girişlerde düşük=(0,0,0.5), orta=(0.25,0.5,0.75), "
+            "yüksek=(0.5,1,1). Çıktı kümeleri kısıtlı/düşük/orta/yüksek olarak "
+            "tanımlanır; sayısal centroid kod tarafından hesaplanır."
+        )
+
+    plan_task = next(item for item in run.evaluation.tasks if item.decision.task_id == task_id)
+    plan_ratio = plan_task.decision.offloading_ratio
+    st.markdown("#### Ekrandaki planla ilişki")
+    p_left, p_right, p_last = st.columns(3)
+    p_left.metric("Gösterilen plan", run.method)
+    p_right.metric("Planın oranı", f"%{100 * plan_ratio:.2f}")
+    p_last.metric("Bu görevin veri kaynaklı cap'i", f"%{100 * task_policy.allowed_offloading_ratio:.2f}")
+    if plan_ratio <= task_policy.allowed_offloading_ratio + 1e-12:
+        st.success("Gösterilen plan bu görev için Mamdani üst sınırına uyuyor.")
+    else:
+        st.warning(
+            "Gösterilen plan baseline olabilir; bu nedenle Mamdani üst sınırını "
+            "uygulamıyor. Aşağıdaki kontrollü karşılaştırma önerilen planı üretir."
+        )
+
+    if st.button(
+        "Baseline ve önerilen Mamdani çözümünü çalıştır",
+        icon=":material/play_arrow:",
+        type="primary",
+        key=f"run_mamdani_comparison_{st.session_state.epoch}",
+    ):
+        runs = []
+        failures = []
+        with st.status("Aynı seed ve bütçeyle çözümler hesaplanıyor...", expanded=True) as status:
+            for method, runner in (
+                ("BOALBFS baseline", lambda: run_method(
+                    data,
+                    "BOALBFS",
+                    seed=seed,
+                    genetic=genetic,
+                    swarm=swarm,
+                    objective=settings[0],
+                    load=load,
+                )),
+                ("Önerilen Mamdani", lambda: run_uncertainty_mamdani(
+                    data,
+                    seed=seed,
+                    genetic=genetic,
+                    swarm=swarm,
+                    objective=settings[0],
+                    load=load,
+                )),
+            ):
+                try:
+                    st.write(method)
+                    runs.append(runner())
+                except (ValueError, TypeError, OverflowError) as exc:
+                    failures.append(f"{method}: {exc}")
+            status.update(
+                label="Mamdani karşılaştırması tamamlandı",
+                state="complete",
+                expanded=False,
+            )
+        st.session_state.runs = runs
+        st.session_state.run_failures = failures
+        st.session_state.run_context = context_key(data, *settings)
+        st.rerun()
+
+
 def display_plan(data, run):
     tabs = st.tabs(
         (
@@ -892,8 +1109,8 @@ def compare_view(data, settings):
     st.subheader("Ayn\u0131 girdilerle \u00e7\u00f6z\u00fcm arama")
     chosen = st.multiselect(
         "Y\u00f6ntemler",
-        METHODS,
-        default=["Local", "BOALBFS", "Analytical"],
+        COMPARISON_METHODS,
+        default=["Local", "BOALBFS", UNCERTAINTY_MAMDANI_METHOD],
         format_func=METHOD_LABELS.get,
     )
     a, b, c = st.columns(3)
@@ -920,17 +1137,29 @@ def compare_view(data, settings):
             for method in chosen:
                 st.write(METHOD_LABELS[method])
                 try:
-                    runs.append(
-                        run_method(
-                            data,
-                            method,
-                            seed=seed,
-                            genetic=genetic,
-                            swarm=swarm,
-                            objective=objective,
-                            load=load,
+                    if method == UNCERTAINTY_MAMDANI_METHOD:
+                        runs.append(
+                            run_uncertainty_mamdani(
+                                data,
+                                seed=seed,
+                                genetic=genetic,
+                                swarm=swarm,
+                                objective=objective,
+                                load=load,
+                            )
                         )
-                    )
+                    else:
+                        runs.append(
+                            run_method(
+                                data,
+                                method,
+                                seed=seed,
+                                genetic=genetic,
+                                swarm=swarm,
+                                objective=objective,
+                                load=load,
+                            )
+                        )
                 except (ValueError, TypeError, OverflowError) as exc:
                     failures.append(f"{method}: {exc}")
             status.update(
@@ -1304,8 +1533,10 @@ def main():
         task_view(data, run, objective, load)
     elif view == VIEWS[3]:
         compare_view(data, settings)
-    else:
+    elif view == VIEWS[4]:
         experiments_view(data, settings)
+    else:
+        mamdani_view(data, run, settings)
     st.divider()
     st.download_button(
         "G\u00f6sterilen plan + girdiler JSON",

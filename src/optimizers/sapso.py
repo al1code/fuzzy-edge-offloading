@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from math import exp
 
@@ -15,6 +15,7 @@ from src.objective import NormalizationConstants, ObjectiveConfig
 from src.optimizers.genetic import GeneticSearchResult, search_locations
 from src.optimizers.locations import validate_locations
 from src.random_utils import RandomState
+from src.ratio_caps import validate_ratio_caps
 from src.scenario import OffloadingDecision, OffloadingScenario
 from src.validation import validate_non_negative
 
@@ -59,17 +60,21 @@ def solve_sapso(
     config: SwarmSearchConfig | None = None,
     objective_config: ObjectiveConfig | None = None,
     load_config: LoadBalanceConfig | None = None,
+    ratio_caps: Mapping[str, float] | None = None,
 ) -> SwarmSearchResult:
     """Search ratios for fixed locations, without using the analytical oracle.
 
     Capacity depends only on locations, so check it before drawing particles.
     All-local needs one evaluation. Otherwise initialize uniform ratios and
-    velocities, pin local dimensions to zero, and project proposals to [0,1].
-    A rejected proposal retains the new velocity, not the new position.
+    velocities, pin local/zero-cap dimensions to zero, and project proposals
+    to [0,1].  The swarm coordinates are normalized; they are converted to
+    task-specific actual ratios with ``ratio_caps`` before evaluation.  A
+    rejected proposal retains the new velocity, not the new position.
     Personal/global historical bests never worsen after annealing acceptance.
     """
 
     locations = validate_locations(scenario, locations)
+    ratio_caps = validate_ratio_caps(scenario, ratio_caps)
     if not isinstance(random_state, RandomState):
         raise TypeError("random_state must be a RandomState")
     if config is None:
@@ -78,9 +83,18 @@ def solve_sapso(
         raise TypeError("config must be a SwarmSearchConfig")
     evaluations = 0
 
-    def evaluate(ratios: np.ndarray) -> PlanEvaluation:
+    caps = np.array(
+        [
+            1.0 if ratio_caps is None else ratio_caps[task.task.task_id]
+            for task in scenario.tasks
+        ],
+        dtype=float,
+    )
+
+    def evaluate(normalized_ratios: np.ndarray) -> PlanEvaluation:
         nonlocal evaluations
         evaluations += 1
+        ratios = normalized_ratios * caps
         decisions = tuple(
             OffloadingDecision(
                 task.task.task_id,
@@ -95,9 +109,11 @@ def solve_sapso(
             normalization=normalization,
             objective_config=objective_config,
             load_config=load_config,
+            ratio_caps=ratio_caps,
         )
 
     local_dimensions = np.array(locations) == 0
+    inactive_dimensions = local_dimensions | (caps == 0.0)
     precheck = evaluate(np.zeros(len(locations)))
     if local_dimensions.all():
         return SwarmSearchResult(precheck, evaluations, (precheck.objective.value,), 0)
@@ -105,7 +121,7 @@ def solve_sapso(
     shape = (config.particle_count, len(locations))
     positions = rng.random(shape)
     velocities = rng.uniform(-config.velocity_limit, config.velocity_limit, shape)
-    positions[:, local_dimensions] = velocities[:, local_dimensions] = 0.0
+    positions[:, inactive_dimensions] = velocities[:, inactive_dimensions] = 0.0
     initial = [evaluate(position) for position in positions]
     values = np.array([result.objective.value for result in initial])
     personal_positions, personal_values = positions.copy(), values.copy()
@@ -129,7 +145,7 @@ def solve_sapso(
                 + config.social * rng.random(shape) * (best_position - positions)
             )
         velocities = np.clip(velocities, -config.velocity_limit, config.velocity_limit)
-        velocities[:, local_dimensions] = 0.0
+        velocities[:, inactive_dimensions] = 0.0
         proposals = np.clip(positions + velocities, 0.0, 1.0)
         for index, proposal in enumerate(proposals):
             result = evaluate(proposal)
@@ -157,9 +173,11 @@ def solve_boalbfs(
     swarm_config: SwarmSearchConfig | None = None,
     objective_config: ObjectiveConfig | None = None,
     load_config: LoadBalanceConfig | None = None,
+    ratio_caps: Mapping[str, float] | None = None,
 ) -> BOALBFSResult:
     """Couple GA locations to SA-PSO ratios, retaining actual plan-call counts."""
 
+    ratio_caps = validate_ratio_caps(scenario, ratio_caps)
     plan_evaluations = accepted_worse = 0
 
     def evaluator(locations: tuple[int, ...]) -> PlanEvaluation:
@@ -173,6 +191,7 @@ def solve_boalbfs(
                 config=swarm_config,
                 objective_config=objective_config,
                 load_config=load_config,
+                ratio_caps=ratio_caps,
             )
         except CapacityExceededError:
             # Infeasibility is detected by the single precheck, before any swarm.

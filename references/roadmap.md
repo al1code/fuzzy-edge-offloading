@@ -49,7 +49,7 @@ yeniden degerlendiririz. Su anki kapsam ogrencinin onayladigi calisma hedefidir.
 | 7 | Adaptif genetik sunucu secimi | Konum kromozomu, uygunluk, elitizm ve adaptif operatorler kayitli butceyle testlidir | Hazir; ayri analitik kontrol modu korunur |
 | 8 | SA-PSO ve BOALBFS butunlestirme | Oran aramasi genetik katmana baglanir; kucuk kesin cozumlerle kalite kontrolu ve buyuk senaryoda calisma testi yapilir | Hazir; yayin disi ayarlar belgeli varsayimdir |
 | 9 | Referans deneyleri | Local/Edge/Local-Edge, coklu seed, sure/risk/yuk/amac, calisma suresi, tablo/grafik ve makaleyle sinirli karsilastirma | Secilen ilk deney hazir: 45 kayit; normalizasyon/yayin uyumu siniri acik |
-| 10 | Ozgun katki | Onceden tanimli soru, degisiklik ve olcutler ayni girdilerle baseline'a karsi denenir | Oran maliyeti calismasi: 30 sabit-konum ve ayri 30 tam-GA kaydi; sinirlar raporlanir |
+| 10 | Ozgun katki | Onceden tanimli soru, degisiklik ve olcutler ayni girdilerle baseline'a karsi denenir | Oran maliyeti calismasi hazir; belirsizlik-duyarli Mamdani denetleyicisi icin kontrollu CLI deneyi ve GUI inceleme akisi eklendi |
 | 11 | GUI, rapor, sunum ve teslim | Son kod adimi olarak sonuc arayuzu; dogrulanmis literatur, 8-12 sayfalik rapor, AI bildirimi, sunum ve temiz ortam/canli demo kontrolu | GUI mevcut motorla uygulandi; rapor/sunum ve nihai teslim kontrolleri acik |
 
 Literatur okuma, kaynak kaydi, aciklama ve rapor notlari tum surec boyunca
@@ -93,11 +93,13 @@ istege bagli ek dayaniklilik deneyi olabilir; uzman guvenlik gorusleri ve
 kablosuz kanal girdilerini tek basina saglamaz. Yayinlanan yuzdeleri aynen
 elde edecegimizi veya yazar verisini kullandigimizi iddia etmiyoruz.
 
-Fuzzy kapsam notu: sayisal ucgensel degerlendirme mevcut; Table 3 dilsel
-etiket eslemesi ve verilen noktada uyelik derecesi hesaplama henuz yok.
-Makalenin agirlikli fuzzy degerlendirmesini ayri bir Mamdani/Sugeno kural
-motoruyla karistirmayacagiz. Hocanin genel kural/inference beklentisinin bu
-makaleye nasil uygulanacagi, nihai MRR uygunlugu iddia edilmeden netlesmeli.
+Fuzzy kapsam notu: makalenin agirlikli ucgensel degerlendirmesi ile onerilen
+Mamdani karar katmani birbirinden ayridir. Onerilen katman, makale denklemlerini
+degistirmez; agregalan ucgenlerin ortalama genisligini belirsizlik girdisi
+olarak kullanir ve ratio cap uretir. Type-1 Mamdani kural tabani, min-AND,
+max-birlestirme ve centroid durusturmesiyle kodlanmistir. Bu, ders icin
+gerekceli bir uzanti ve kontrollu deneydir; makalenin kendi yontemi veya
+yayinin deney sonucu olarak sunulmaz.
 
 Sabit konumlarda mevcut amac oranlara gore dogrusaldir. Bu nedenle en az
 bir uc-nokta optimumu vardir. [Kesin arama notlari](exact_search.md) bunu

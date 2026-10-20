@@ -19,6 +19,10 @@ from src.config import (
 )
 from src.dataset_io import dataset_fingerprint, dataset_to_json, read_dataset
 from src.evaluation import PlanEvaluation, derive_normalization, evaluate_plan
+from src.fuzzy_controller import (
+    MamdaniOffloadingDecision,
+    derive_task_policy_decisions,
+)
 from src.fuzzy_security import SecurityPerspectives, assess_security
 from src.objective import ObjectiveConfig
 from src.optimizers.exact import solve_exact
@@ -31,6 +35,7 @@ from src.synthetic import SyntheticDataset
 from src.validation import validate_non_negative
 
 METHODS = ("Local", "Edge", "BOALBFS", "Analytical", "Exact")
+UNCERTAINTY_MAMDANI_METHOD = "Mamdani / belirsizlik duyarlı"
 MAX_EXACT_CANDIDATES = 5000
 MAX_PLAN_BUDGET = 100000
 
@@ -45,6 +50,68 @@ class DashboardRun:
     endpoint_tests: int = 0
     infeasible_evaluations: int = 0
     history: tuple[float, ...] = ()
+
+
+def mamdani_policy_for_dataset(
+    dataset: SyntheticDataset,
+) -> tuple[MamdaniOffloadingDecision, ...]:
+    """Derive traceable proposed-policy decisions in the scenario task order."""
+
+    if not isinstance(dataset, SyntheticDataset):
+        raise TypeError("dataset must be a SyntheticDataset")
+    return derive_task_policy_decisions(
+        tuple(profile.security_level for profile in dataset.scenario.tasks),
+        dataset.expert_assessments,
+        dataset.configuration.expert_weights,
+    )
+
+
+def mamdani_caps_for_dataset(dataset: SyntheticDataset) -> dict[str, float]:
+    """Map each task ID to its Mamdani-permitted offloading upper bound."""
+
+    policy = mamdani_policy_for_dataset(dataset)
+    return {
+        profile.task.task_id: decision.allowed_offloading_ratio
+        for profile, decision in zip(dataset.scenario.tasks, policy, strict=True)
+    }
+
+
+def run_uncertainty_mamdani(
+    dataset: SyntheticDataset,
+    *,
+    seed: int,
+    genetic: GeneticSearchConfig,
+    swarm: SwarmSearchConfig,
+    objective: ObjectiveConfig,
+    load: LoadBalanceConfig,
+) -> DashboardRun:
+    """Run BOALBFS under the proposed policy using the current GUI inputs."""
+
+    if (
+        genetic.evaluation_budget * swarm.evaluation_budget > MAX_PLAN_BUDGET
+    ):
+        raise ValueError(f"interactive plan budget exceeds {MAX_PLAN_BUDGET}")
+    start = perf_counter()
+    result = solve_boalbfs(
+        dataset.scenario,
+        normalization=dataset.normalization,
+        random_state=create_random_state(seed),
+        genetic_config=genetic,
+        swarm_config=swarm,
+        objective_config=objective,
+        load_config=load,
+        ratio_caps=mamdani_caps_for_dataset(dataset),
+    )
+    return DashboardRun(
+        UNCERTAINTY_MAMDANI_METHOD,
+        result.genetic.best,
+        perf_counter() - start,
+        result.genetic.evaluations,
+        result.plan_evaluations,
+        0,
+        result.genetic.infeasible_evaluations,
+        tuple(h.best_objective_value for h in result.genetic.history),
+    )
 
 
 def run_method(

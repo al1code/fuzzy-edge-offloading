@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from math import fsum
 
@@ -22,6 +22,7 @@ from src.objective import (
     ObjectiveConfig,
     calculate_objective,
 )
+from src.ratio_caps import validate_ratio_caps
 from src.scenario import OffloadingDecision, OffloadingScenario
 from src.validation import validate_non_negative
 
@@ -106,18 +107,22 @@ def evaluate_plan(
     normalization: NormalizationConstants,
     objective_config: ObjectiveConfig | None = None,
     load_config: LoadBalanceConfig | None = None,
+    ratio_caps: Mapping[str, float] | None = None,
 ) -> PlanEvaluation:
     """Evaluate one complete plan; reject invalid/infeasible assignments.
 
     Selected reservations depend on y, even when x=0. There is no queue,
     deadline constraint, ratio optimization, implicit resource reallocation,
     or global bandwidth constraint beyond the cited per-server equations.
+    ``ratio_caps`` is a proposed-policy extension: when supplied, each task's
+    ratio must not exceed its precomputed Mamdani policy cap.
     """
 
     if not isinstance(scenario, OffloadingScenario):
         raise TypeError("scenario must be an OffloadingScenario")
     if not isinstance(normalization, NormalizationConstants):
         raise TypeError("normalization must be NormalizationConstants")
+    ratio_caps = validate_ratio_caps(scenario, ratio_caps)
     decisions = tuple(decisions)
     if any(not isinstance(decision, OffloadingDecision) for decision in decisions):
         raise TypeError("decisions must contain OffloadingDecision objects")
@@ -134,6 +139,14 @@ def evaluate_plan(
     task_results = []
     for profile in scenario.tasks:
         decision = by_task[profile.task.task_id]
+        if (
+            ratio_caps is not None
+            and decision.offloading_ratio
+            > ratio_caps[profile.task.task_id] + 1e-12
+        ):
+            raise ValueError(
+                f"offloading ratio for {profile.task.task_id} exceeds its policy cap"
+            )
         edge_cpu = 0.0
         rate = 0.0
         if decision.server_id is not None:

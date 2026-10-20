@@ -29,6 +29,9 @@ For an accessible walkthrough in Turkish, start with
 [Bu projede ne yapiyoruz?](references/adim_adim_rehber.md).
 The [11-stage roadmap](references/roadmap.md) records the current stage,
 completion criteria, and the distinction between a working baseline and delivery.
+The detailed article-to-code alignment and the limits of quantitative
+reproduction are documented in
+[Makale uyumu ve onerilen gelistirme](references/paper_alignment.md).
 
 ## Implemented Components
 
@@ -44,7 +47,8 @@ completion criteria, and the distinction between a working baseline and delivery
 - SA-PSO optimization
 - BOALBFS integration
 - Baseline reproduction experiments
-- Proposed extension
+- Proposed extensions: analytical ratio cost study and uncertainty-aware
+  Mamdani offloading controller
 - Comparative experimental evaluation
 - Turkish interactive dashboard and saved-experiment inspection
 
@@ -58,6 +62,13 @@ The project will proceed without depending on an author response. Its primary
 experiments will use seeded synthetic scenarios based on the reported parameter
 information, with all unspecified choices documented. This reproduces the
 method under recorded assumptions, not the authors' exact experimental inputs.
+
+The paper's original main dataset is not available to this project. The course
+instructor approved using generated data for this situation. Therefore the
+synthetic dataset is an intentional and documented experimental choice, not a
+claim that the author's hidden data was recovered. Every recorded scenario
+stores its seed, generated inputs, configuration, software versions and
+checksums so the project results remain reproducible.
 
 Any assumptions that are not explicitly specified in the paper will be documented separately.
 
@@ -186,6 +197,27 @@ perspectives, and calculates security and offloading risks using Eqs. (11)-(15).
 The result retains the aggregated triangles and perspective scores so each
 calculation can be explained. This is the reference paper's weighted assessment
 method; it does not introduce a separate Mamdani/Sugeno rule base.
+
+The proposed uncertainty-aware Mamdani controller is a separate decision layer,
+not a replacement claim for the paper's fuzzy-security equations. It aggregates
+the expert triangles, measures their mean triangular width as an assessment
+uncertainty indicator, and uses a documented conservative 3x3 Type-1 Mamdani
+rule base to produce a per-task offloading-ratio cap. The baseline and proposed
+pipeline use the same generated dataset, normalization, GA/SA-PSO budgets, and
+optimizer seeds. The controlled CLI experiment is
+[`uncertainty_mamdani_comparison.py`](experiments/proposed/uncertainty_mamdani_comparison.py);
+its manifest records inputs, source checksums, assumptions, and outputs. The
+cap limits the proposed optimizer only; `uncertainty_weighted_exposure` is a
+diagnostic sensitivity metric, not an attack probability or a paper metric.
+
+The article's reported experiments are broader than the currently recorded
+baseline bundle: they also vary task/server counts, wireless rate, load
+balancing, objective weights, iterations, and compare five additional
+optimizers. The current repository reproduces the core BOALBFS chain under
+documented assumptions and adds the Mamdani policy; it does not claim those
+unimplemented competitor algorithms or the authors' exact percentages.
+See the [alignment note](references/paper_alignment.md) before interpreting
+any project result as a paper result.
 
 See [the fuzzy equation mapping](references/fuzzy_security.md),
 [the simulation model and unit assumptions](references/simulation.md),
@@ -396,7 +428,8 @@ Raw evidence is stored locally, outside Git tracking, in
 reproducibility check without overwriting the first run.
 All 45 decisions, metric breakdowns, histories, and evaluation counts replayed
 exactly; elapsed search times are not expected to match. Replay artifact/source
-checksums were verified. Current verification: 678 tests and Ruff checks pass.
+checksums were verified. Current verification: 749 tests pass; generated experiment bundles remain local
+and are not treated as source data.
 
 ## Limitations
 
@@ -424,8 +457,10 @@ checksums were verified. Current verification: 678 tests and Ruff checks pass.
 - The selected mode experiment is exploratory. Its fixed risk normalization and
   equal objective weights imply full Edge has higher F than Local when risk is
   positive. Do not claim quantitative agreement with Fig. 2 or tune results to fit it.
-- The instructor-specific Minimum Reproduction Requirement (MRR) is not yet
-  recorded. The course requirements have not all been satisfied at this stage.
+- The selected MRR and the course-guideline compliance matrix are recorded in
+  [project_guideline_alignment.md](references/project_guideline_alignment.md).
+  The paper's unavailable author dataset prevents a claim of exact numerical
+  reproduction; the instructor-approved synthetic-data protocol is explicit.
 - The first contribution experiment holds round-robin locations fixed; the
   follow-up measures both search layers under the same upper GA budget.
   SA-PSO uses random initial particles, not the zero-ratio capacity check as its
@@ -468,8 +503,12 @@ Generative AI tools may be used as development aids for explanation, debugging, 
 
 A Generative AI Usage Disclosure will also be included in the final technical report.
 
+The repository-side checklist for the course guideline is in
+[project_guideline_alignment.md](references/project_guideline_alignment.md).
+The current state and safe continuation instructions for another development
+assistant are in [next_agent_handoff.md](references/next_agent_handoff.md).
+
 ## References
 
 See [references/README.md](references/README.md) for the current reference list.
 Related-work references will be added after their contents have been verified.
-
