@@ -1212,6 +1212,10 @@ def current_runs(data, settings):
 
 
 def result_charts(records, *, aggregate=False):
+    st.caption(
+        "Grafik rehberi: F, süre, risk ve yük varyansında düşük değer tercih edilir. "
+        "Arama maliyeti yalnızca algoritmanın çözüm arama süresidir."
+    )
     results, cost = st.tabs(("S\u00fcre, risk ve denge", "Arama maliyeti"))
     with results:
         specs = (
@@ -1250,6 +1254,22 @@ def result_charts(records, *, aggregate=False):
         )
 
 
+def interface_guide(view):
+    """Explain the selected dashboard view during a live demonstration."""
+
+    guides = {
+        "Senaryo": "Seed, görev/sunucu sayısı ve model parametreleri burada belirlenir. Aynı seed aynı sentetik girdileri üretir.",
+        "Bulanık Güvenlik": "Üçgen uzman değerlendirmeleri birleştirilir; güvenlik puanı ve model riski hesaplanır. Bu ekran Mamdani kural motorundan ayrıdır.",
+        "Görev ve Sunucular": "Görevlerin veri, CPU, bağlantı ve sunucu yükü ayrıntıları incelenir.",
+        "Çözüm Karşılaştırması": "Local, Edge, BOALBFS, Analytical ve küçük senaryoda Exact aynı senaryoda karşılaştırılır. F düşük olduğunda daha iyidir.",
+        "Deney Kayıtları": "Çoklu-seed deneyleri manifest, CSV ve checksum ile kaydedilir; policy deneyinde baseline ve Mamdani cap karşılaştırılır.",
+        "Mamdani Katkısı": "Güvenlik S ve belirsizlik U, görev bazlı offloading cap üretir; aktif kurallar ve cap'in plana etkisi gösterilir.",
+    }
+    with st.container(border=True):
+        st.markdown(f"**{view} ekranı nasıl okunur?**")
+        st.caption(guides[view])
+
+
 def experiments_view(data, settings):
     st.subheader("Kendini tekrar eden deneyler ve kay\u0131tl\u0131 kan\u0131t")
     with st.expander("Yeni \u00e7oklu-seed deneyi"):
@@ -1261,6 +1281,8 @@ def experiments_view(data, settings):
             (
                 "Tam GA kar\u015f\u0131la\u015ft\u0131rmas\u0131",
                 "Sabit konum oranlar\u0131",
+                "Mamdani oran politikas\u0131",
+                "Mamdani GA sensitivity",
                 "Local / Edge / Local-Edge",
             ),
         )
@@ -1283,6 +1305,7 @@ def experiments_view(data, settings):
                     * swarm.evaluation_budget
                     * len(seeds)
                     * len(search_seeds)
+                    * (3 if kind == "Mamdani GA sensitivity" else 1)
                     > 250000
                 ):
                     raise ValueError(
@@ -1307,11 +1330,31 @@ def experiments_view(data, settings):
                     }
                     if kind == "Local / Edge / Local-Edge":
                         run_modes(output, genetic_config=genetic, **kwargs)
+                    elif kind == "Mamdani GA sensitivity":
+                        from experiments.proposed.uncertainty_mamdani_comparison import (
+                            run_experiment as run_mamdani_experiment,
+                        )
+
+                        run_mamdani_experiment(
+                            output,
+                            data_seeds=tuple(seeds),
+                            optimizer_seeds=tuple(search_seeds),
+                            scenario_config=data.configuration,
+                            genetic_config=genetic,
+                            swarm_config=swarm,
+                            link_rate_factors=(0.5, 1.0, 2.0),
+                        )
                     else:
                         run_ratios(
                             output,
                             genetic_config=genetic,
-                            scope="pipeline" if kind.startswith("Tam") else "fixed",
+                            scope=(
+                                "pipeline"
+                                if kind.startswith("Tam")
+                                else "policy"
+                                if kind == "Mamdani oran politikas\u0131"
+                                else "fixed"
+                            ),
                             **kwargs,
                         )
                 st.session_state.last_bundle = output.name
@@ -1349,6 +1392,46 @@ def experiments_view(data, settings):
         return
     stats = pd.DataFrame(bundle_statistics(rows))
     st.dataframe(stats, hide_index=True, width="stretch")
+    if manifest.get("experiment") == "uncertainty-aware-mamdani-v1":
+        sensitivity_plot = folder / "comparison.png"
+        if sensitivity_plot.is_file():
+            st.markdown("#### Mamdani sensitivity sonucu")
+            st.image(
+                sensitivity_plot,
+                caption=(
+                    "Kablosuz link hızı değişirken baseline ve Mamdani "
+                    "BOALBFS sonuçlarının karşılaştırması."
+                ),
+                width="stretch",
+            )
+    pareto = folder / "risk_latency_pareto.png"
+    if pareto.is_file() and manifest.get("experiment") == "mamdani-policy-ratios-v1":
+        st.markdown("#### Risk-gecikme dengesi")
+        st.image(
+            pareto,
+            caption=(
+                "Mamdani cap uygulandığında risk azalırken gecikmenin nasıl "
+                "değiştiği. Sol-alt bölge daha düşük risk ve gecikmeyi gösterir."
+            ),
+            width="stretch",
+        )
+        policy_columns = [
+            column
+            for column in (
+                "uncertainty_weighted_exposure",
+                "mean_offloading_ratio",
+                "mean_allowed_cap",
+                "offloaded_tasks",
+            )
+            if column in rows[0]
+        ]
+        if policy_columns:
+            st.markdown("#### Mamdani politika metrikleri")
+            st.dataframe(
+                pd.DataFrame(rows)[["method", *policy_columns]],
+                hide_index=True,
+                width="stretch",
+            )
     plot_records = stats.rename(
         columns={
             "F": "objective",
@@ -1469,6 +1552,7 @@ def main():
             "experiment": " / deney girdisi",
         }[st.session_state.input_source]
     )
+    interface_guide(view)
     runs = current_runs(data, settings)
     if runs:
         run = st.selectbox(

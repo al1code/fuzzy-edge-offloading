@@ -4,38 +4,35 @@ This note preserves the next steps across development sessions. It was checked
 against `Bulanik_Mantik_Donem_Projesi_Yonergesi.pdf` supplied by the student
 on 2026-10-03. The course document remains outside this repository.
 
-## Session Checkpoint (2026-10-05)
+## Session Checkpoint (2026-10-20)
 
 - Last verified local checkpoint: `23f4d72`, the full analytical-ratio comparison.
   Its author is the student's existing Git identity; local `origin/main` matches.
   GUI work comes after that checkpoint and has not been committed by the assistant.
-- Stages 1-8 and the selected stage-9 experiment are implemented. The experiment
-  has 45 records under documented assumptions, not recovered author inputs.
-- Stage 10's [ratio-cost study](ratio_comparison.md) has 30 fixed-location
-  records plus a separate 30-record full GA comparison. The first study alone
-  did not establish whole-system benefit. The follow-up measures both layers
-  without changing the core algorithms or assumptions; no global optimum,
-  scientific novelty, statistical significance or instructor approval is claimed.
-  Final checked means: F 0.238117 / 0.236411; full search 9.7044 / 0.1878 s;
-  paired F reduction 0.706169%. Risk increases; do not claim all metrics improve.
-  678 tests pass. All 30 records, controls, replay and bundle hashes checked.
-- The optional [Turkish GUI](gui.md) now calls the existing core and experiment
-  programs. Five views cover inputs, fuzzy calculations, task/server details,
-  solver comparison and saved/new multi-seed experiments. It is the last planned
-  coding step; the report, presentation, and final delivery checks remain.
-  Full verification: 719 tests pass, including 41 GUI adapter/interaction tests;
-  Ruff checks pass. GUI dependencies are optional and separately pinned.
+- Stages 1-10 are implemented under documented synthetic-data assumptions.
+  Stage 9 has 45 baseline records; Stage 10 now includes the controlled
+  uncertainty-aware Mamdani BOALBFS experiment, fixed-location policy
+  comparison, link-rate sensitivity and risk-latency visualization.
+- The Mamdani controller uses the paper-derived security score plus aggregated
+  triangular-assessment spread to produce per-task offloading caps. It is a
+  project extension, not a claim about the paper's original algorithm.
+- The Turkish GUI calls the existing core and experiment programs. It covers
+  task-level Mamdani traces, baseline/proposed runs, policy experiments,
+  sensitivity experiments and saved result bundles. The report, presentation
+  and final delivery checks remain.
+- Full verification: 753 tests pass, including GUI and experiment tests.
 - Experiment bundles under `results/` are ignored by Git and remain local;
   only directory placeholders are tracked there. The latest contribution
   lower-layer bundle is `results/proposed_ratios_v1_checked`; full-pipeline
   bundles are `results/proposed_pipelines_v1` and its separate `_checked` replay.
 - The student's priority is a project they can understand: proceed in small,
-  explained steps and avoid extra features or duplicated documentation.
+  explained steps and avoid unrelated features or duplicated documentation.
 
 Start a future session by reading this note, the README, and the roadmap, then
 inspect the actual checkout and Git status. Do not repeat completed stages or
-assume a new chat has the full earlier conversation. The instructor-specific
-MRR remains undecided. Continue with student review/demo understanding and final
+assume a new chat has the full earlier conversation. No separate
+instructor-issued MRR identifier is available; use the documented working
+scope and continue with student review/demo understanding and final
 deliverables, not another optimizer or a separate simulation framework.
 
 ## Scope and Current Status
@@ -46,15 +43,16 @@ components needed for baseline offloading experiments. An original
 experimental contribution follows the working baseline and its evaluation.
 
 The guideline's Section 5.1 says the instructor defines each project's Minimum
-Reproduction Requirement (MRR). That project-specific scope is not recorded
-yet. On 2026-10-03 the student confirmed this and authorized a suitable working
-scope. [The proposed implementation and experiment plan](reproduction_plan.md)
-records that target separately from instructor approval. The current
-implementation does not establish that the full MRR has been satisfied.
+Reproduction Requirement (MRR). No separate instructor-issued MRR identifier
+is available, so the repository uses the documented working scope in
+[project_guideline_alignment.md](project_guideline_alignment.md): the core
+fuzzy-security/BOALBFS flow, one reference-mode experiment, and one controlled
+Mamdani extension. This is a transparent project scope, not a claim that every
+paper figure or competitor optimizer has been reproduced.
 
 | Guideline requirement | Current evidence | Remaining work |
 | --- | --- | --- |
-| 5.2-5.3: Define inputs/outputs and correctly model the fuzzy method | Equation mapping, validated triangles, expert/perspective aggregation, risk functions | Resolve linguistic-label mapping and confirm how the rule-base requirement applies to this paper's MRR |
+| 5.2-5.3: Define inputs/outputs and correctly model the fuzzy method | Equation mapping, validated triangles, expert/perspective aggregation, risk functions, and separate Mamdani membership/rule/inference/defuzzification layer | Keep paper numeric baseline and project Mamdani extension distinct |
 | 5.2-5.3: Test different inputs and maintain working code | Unit/integration tests, generation/replay, exact hand/grid checks, GA/SA-PSO oracle comparisons | Assess multi-seed search quality beyond worked examples |
 | 5.2-5.3: Reproduce at least one core experiment and compare with the paper | Selected Fig. 2 question evaluated: 45 paired records, saved plans/inputs, component metrics, and explicit ranking/normalization limits | Instructor assessment of MRR; do not claim recovered author inputs or percentages |
 | 5.3 and 11: Code quality and reproducibility | Saved experiment inputs/plans/budgets; all 45 records replay identically except elapsed times; 9 artifact and 25 source hashes verified | Final clean-environment replay and delivery checks |
@@ -64,12 +62,11 @@ implementation does not establish that the full MRR has been satisfied.
 | 15-16: AI disclosure and academic integrity | README disclosure intent; examples clearly identified as synthetic | Student review/understanding and final Generative AI Usage Disclosure |
 
 The general guideline mentions membership functions, rules, inference, and
-defuzzification. This article's selected numerical subsystem is triangular
-fuzzy assessment with expert weighting and transformation. A new rule engine
-must not be inserted and presented as the reference method merely to match
-generic wording. Confirm the instructor's MRR before claiming course-wide
-coverage. The generic triangle model currently stores and transforms triangle
-parameters; it does not yet evaluate a membership function at a supplied point.
+defuzzification. The paper's numeric baseline remains triangular fuzzy
+assessment with expert weighting and transformation. The project extension
+separately provides the requested Type-1 Mamdani rule engine, membership
+evaluation, min/max inference and centroid defuzzification; it must not be
+presented as if it were part of the reference paper.
 
 Unit-test examples validate calculations. They are not a replacement for the
 required published-experiment reproduction or controlled extension comparison.

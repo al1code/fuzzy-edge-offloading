@@ -27,6 +27,11 @@ from src.config import (
 )
 from src.dataset_io import dataset_fingerprint, write_dataset
 from src.evaluation import PlanEvaluation, evaluate_plan
+from src.fuzzy_controller import (
+    calculate_aggregate_assessment_uncertainty,
+    derive_task_ratio_caps,
+)
+from src.fuzzy_security import aggregate_expert_assessments
 from src.objective import ObjectiveConfig
 from src.optimizers.genetic import search_locations
 from src.optimizers.locations import evaluate_locations_exact, validate_locations
@@ -37,6 +42,12 @@ from src.synthetic import SyntheticDataset, generate_synthetic_dataset
 from src.validation import validate_integer
 
 METHODS = ("SA-PSO", "Analytical")
+POLICY_METHODS = (
+    "SA-PSO",
+    "Analytical",
+    "Mamdani SA-PSO",
+    "Mamdani Analytical",
+)
 PIPELINE_METHODS = ("GA+SA-PSO", "GA+Analytical")
 DATA_SEEDS = (7, 21, 42, 84, 2026)
 METRICS = ("objective", "gap_to_exact", "search_seconds", "plan_evaluations")
@@ -47,6 +58,15 @@ PIPELINE_METRICS = METRICS + (
     "endpoint_tests",
     "ga_evaluations",
     "objective_delta_vs_sapso",
+)
+POLICY_METRICS = METRICS + (
+    "total_latency_seconds",
+    "total_security_risk",
+    "load_variance",
+    "uncertainty_weighted_exposure",
+    "mean_offloading_ratio",
+    "mean_allowed_cap",
+    "offloaded_tasks",
 )
 
 
@@ -163,6 +183,173 @@ def compare_ratios(
                 ),
             }
         )
+    return rows
+
+
+def _derive_policy_inputs(
+    dataset: SyntheticDataset,
+) -> tuple[dict[str, float], dict[str, float]]:
+    """Return task-specific Mamdani caps and assessment-spread indicators."""
+
+    caps = derive_task_ratio_caps(
+        tuple(profile.security_level for profile in dataset.scenario.tasks),
+        dataset.expert_assessments,
+        dataset.configuration.expert_weights,
+    )
+    cap_by_task = {
+        profile.task.task_id: float(cap)
+        for profile, cap in zip(dataset.scenario.tasks, caps, strict=True)
+    }
+    uncertainty_by_task = {}
+    for profile, assessments in zip(
+        dataset.scenario.tasks, dataset.expert_assessments, strict=True
+    ):
+        aggregate = aggregate_expert_assessments(
+            assessments, dataset.configuration.expert_weights
+        )
+        uncertainty_by_task[profile.task.task_id] = (
+            calculate_aggregate_assessment_uncertainty(aggregate)
+        )
+    return cap_by_task, uncertainty_by_task
+
+
+def _policy_row(
+    dataset: SyntheticDataset,
+    method: str,
+    optimizer_seed: int,
+    locations: Sequence[int],
+    evaluation: PlanEvaluation,
+    calls: int,
+    elapsed: float,
+    *,
+    caps: dict[str, float],
+    uncertainties: dict[str, float],
+    endpoint_tests: int,
+) -> dict:
+    """Serialize a baseline or cap-constrained fixed-location ratio result."""
+
+    return {
+        **_plan_row(
+            dataset,
+            method,
+            optimizer_seed,
+            locations,
+            evaluation,
+            calls,
+            elapsed,
+        ),
+        "uncertainty_weighted_exposure": sum(
+            task.offloading_risk * uncertainties[task.decision.task_id]
+            for task in evaluation.tasks
+        ),
+        "mean_offloading_ratio": mean(
+            task.decision.offloading_ratio for task in evaluation.tasks
+        ),
+        "mean_allowed_cap": mean(caps.values()),
+        "max_cap_excess": max(
+            (
+                max(
+                    0.0,
+                    task.decision.offloading_ratio
+                    - caps[task.decision.task_id],
+                )
+                for task in evaluation.tasks
+            ),
+            default=0.0,
+        ),
+        "offloaded_tasks": sum(
+            task.decision.server_id is not None
+            and task.decision.offloading_ratio > 0.0
+            for task in evaluation.tasks
+        ),
+        "endpoint_tests": endpoint_tests,
+    }
+
+
+def compare_policy_ratios(
+    dataset: SyntheticDataset,
+    optimizer_seed: int,
+    *,
+    swarm_config: SwarmSearchConfig,
+    locations: Sequence[int] | None = None,
+) -> list[dict]:
+    """Compare uncapped and Mamdani-capped ratios at identical locations.
+
+    The two policies use the same dataset, location vector, normalization,
+    optimizer seed, and SA-PSO budget.  Analytical rows provide the exact
+    endpoint choice under each ratio domain; SA-PSO rows show the stochastic
+    search behavior under the same corresponding domain.
+    """
+
+    if not isinstance(dataset, SyntheticDataset):
+        raise TypeError("dataset must be a SyntheticDataset")
+    validate_integer(optimizer_seed, "optimizer_seed")
+    if not isinstance(swarm_config, SwarmSearchConfig):
+        raise TypeError("swarm_config must be a SwarmSearchConfig")
+    scenario = dataset.scenario
+    if locations is None:
+        locations = tuple(
+            i % len(scenario.servers) + 1 for i in range(len(scenario.tasks))
+        )
+    locations = validate_locations(scenario, locations)
+    caps, uncertainties = _derive_policy_inputs(dataset)
+    results: dict[str, tuple[PlanEvaluation, int, float, int]] = {}
+    order = POLICY_METHODS if optimizer_seed % 2 == 0 else POLICY_METHODS[::-1]
+    for method in order:
+        capped = method.startswith("Mamdani")
+        ratio_caps = caps if capped else None
+        state = create_random_state(optimizer_seed)
+        start = perf_counter()
+        if method.endswith("SA-PSO"):
+            result = solve_sapso(
+                scenario,
+                locations,
+                normalization=dataset.normalization,
+                random_state=state,
+                config=swarm_config,
+                ratio_caps=ratio_caps,
+            )
+            evaluation, calls, endpoint_tests = (
+                result.best,
+                result.evaluations,
+                0,
+            )
+        else:
+            evaluation = evaluate_locations_exact(
+                scenario,
+                locations,
+                normalization=dataset.normalization,
+                ratio_caps=ratio_caps,
+            )
+            calls, endpoint_tests = 1, 2 * sum(gene != 0 for gene in locations)
+        results[method] = (
+            evaluation,
+            calls,
+            perf_counter() - start,
+            endpoint_tests,
+        )
+    rows = []
+    for method in POLICY_METHODS:
+        evaluation, calls, elapsed, endpoint_tests = results[method]
+        exact_method = (
+            "Mamdani Analytical" if method.startswith("Mamdani") else "Analytical"
+        )
+        row = _policy_row(
+            dataset,
+            method,
+            optimizer_seed,
+            locations,
+            evaluation,
+            calls,
+            elapsed,
+            caps=caps,
+            uncertainties=uncertainties,
+            endpoint_tests=endpoint_tests,
+        )
+        row["gap_to_exact"] = (
+            evaluation.objective.value - results[exact_method][0].objective.value
+        )
+        rows.append(row)
     return rows
 
 
@@ -299,6 +486,11 @@ def _plot(
 ) -> None:
     figure = Figure(figsize=(9, 4), layout="constrained")
     FigureCanvasAgg(figure)
+    colors = (
+        ("#464646", "#16896b")
+        if len(methods) == 2
+        else ("#464646", "#16896b", "#b85c00", "#7a4fa3")
+    )
     for axis, metric, scale, title in zip(
         figure.subplots(1, 2),
         ("objective", "search_seconds"),
@@ -320,7 +512,7 @@ def _plot(
         if pipeline and metric == "search_seconds":
             axis.set_yscale("log")
             for index, (height, error, color) in enumerate(
-                zip(heights, errors, ("#464646", "#16896b"), strict=True)
+                zip(heights, errors, colors, strict=True)
             ):
                 axis.errorbar(
                     index, height, yerr=error, fmt="o", color=color, capsize=4
@@ -350,7 +542,7 @@ def _plot(
                 methods,
                 heights,
                 yerr=errors,
-                color=("#464646", "#16896b"),
+                color=colors,
                 capsize=4,
             )
             if pipeline:
@@ -364,6 +556,35 @@ def _plot(
         ("Full GA pipelines" if pipeline else "Fixed-location comparison")
         + "; dataset means +/- sample SD"
     )
+    figure.savefig(path, dpi=150)
+
+
+def _plot_policy_pareto(path: Path, rows: list[dict]) -> None:
+    """Plot the paired risk/latency trade-off for the Mamdani policy scope."""
+
+    figure = Figure(figsize=(7, 5), layout="constrained")
+    FigureCanvasAgg(figure)
+    axis = figure.subplots()
+    colors = {
+        "SA-PSO": "#464646",
+        "Analytical": "#16896b",
+        "Mamdani SA-PSO": "#b85c00",
+        "Mamdani Analytical": "#7a4fa3",
+    }
+    for method, color in colors.items():
+        points = [row for row in rows if row["method"] == method]
+        axis.scatter(
+            [row["total_security_risk"] for row in points],
+            [row["total_latency_seconds"] * 1000 for row in points],
+            label=method,
+            color=color,
+            alpha=0.8,
+        )
+    axis.set_xlabel("Total security risk (lower is better)")
+    axis.set_ylabel("Total latency (ms, lower is better)")
+    axis.set_title("Baseline vs Mamdani risk-latency trade-off")
+    axis.grid(alpha=0.2)
+    axis.legend()
     figure.savefig(path, dpi=150)
 
 
@@ -387,8 +608,8 @@ def run_experiment(
     output = Path(output)
     if output.exists():
         raise FileExistsError(f"output already exists: {output}")
-    if scope not in ("fixed", "pipeline"):
-        raise ValueError("scope must be fixed or pipeline")
+    if scope not in ("fixed", "policy", "pipeline"):
+        raise ValueError("scope must be fixed, policy, or pipeline")
     for name, seeds in (
         ("data_seeds", data_seeds),
         ("optimizer_seeds", optimizer_seeds),
@@ -414,15 +635,33 @@ def run_experiment(
     )
     if not isinstance(genetic_config, GeneticSearchConfig):
         raise TypeError("genetic_config must be a GeneticSearchConfig")
-    methods = PIPELINE_METHODS if scope == "pipeline" else METHODS
-    metrics = PIPELINE_METRICS if scope == "pipeline" else METRICS
+    methods = (
+        PIPELINE_METHODS
+        if scope == "pipeline"
+        else POLICY_METHODS
+        if scope == "policy"
+        else METHODS
+    )
+    metrics = (
+        PIPELINE_METRICS
+        if scope == "pipeline"
+        else POLICY_METRICS
+        if scope == "policy"
+        else METRICS
+    )
     root = Path(__file__).resolve().parents[2]
     sources = sorted((root / "src").rglob("*.py")) + [
         Path(__file__).resolve(),
         root / "requirements-lock.txt",
     ]
     manifest = {
-        "experiment": "fixed-location-ratios-v1",
+        "experiment": (
+            "ga-ratio-pipelines-v1"
+            if scope == "pipeline"
+            else "mamdani-policy-ratios-v1"
+            if scope == "policy"
+            else "fixed-location-ratios-v1"
+        ),
         "status": "running",
         "methods": list(methods),
         "data_seeds": list(data_seeds),
@@ -485,6 +724,10 @@ def run_experiment(
                     swarm_config=swarm_config,
                 )
                 if scope == "pipeline"
+                else compare_policy_ratios(
+                    dataset, optimizer_seed, swarm_config=swarm_config
+                )
+                if scope == "policy"
                 else compare_ratios(dataset, optimizer_seed, swarm_config=swarm_config)
             )
     summaries = summarize(rows, methods=methods, metrics=metrics)
@@ -499,6 +742,8 @@ def run_experiment(
         methods=methods,
         pipeline=scope == "pipeline",
     )
+    if scope == "policy":
+        _plot_policy_pareto(output / "risk_latency_pareto.png", rows)
     manifest["status"] = "complete"
     manifest["artifact_sha256"] = {
         str(p.relative_to(output)).replace("\\", "/"): hashlib.sha256(
@@ -514,7 +759,9 @@ def run_experiment(
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--scope", choices=("fixed", "pipeline"), default="fixed")
+    parser.add_argument(
+        "--scope", choices=("fixed", "policy", "pipeline"), default="fixed"
+    )
     parser.add_argument("--tasks", type=int, default=60)
     parser.add_argument("--servers", type=int, default=3)
     parser.add_argument("--data-seeds", type=int, nargs="+", default=list(DATA_SEEDS))
@@ -552,8 +799,20 @@ def main() -> None:
                 "runs": len(rows),
                 "summary": summarize(
                     rows,
-                    methods=PIPELINE_METHODS if args.scope == "pipeline" else METHODS,
-                    metrics=PIPELINE_METRICS if args.scope == "pipeline" else METRICS,
+                    methods=(
+                        PIPELINE_METHODS
+                        if args.scope == "pipeline"
+                        else POLICY_METHODS
+                        if args.scope == "policy"
+                        else METHODS
+                    ),
+                    metrics=(
+                        PIPELINE_METRICS
+                        if args.scope == "pipeline"
+                        else POLICY_METRICS
+                        if args.scope == "policy"
+                        else METRICS
+                    ),
                 ),
             },
             indent=2,

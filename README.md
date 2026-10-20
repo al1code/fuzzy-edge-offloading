@@ -428,7 +428,7 @@ Raw evidence is stored locally, outside Git tracking, in
 reproducibility check without overwriting the first run.
 All 45 decisions, metric breakdowns, histories, and evaluation counts replayed
 exactly; elapsed search times are not expected to match. Replay artifact/source
-checksums were verified. Current verification: 749 tests pass; generated experiment bundles remain local
+checksums were verified. Current verification: 753 tests pass; generated experiment bundles remain local
 and are not treated as source data.
 
 ## Limitations
@@ -437,8 +437,10 @@ and are not treated as source data.
   not recovered author code/data. Quantitative agreement with the paper is not established.
 - Expert weights and the security threshold must be supplied explicitly to the
   assessment API. Demo parameters are illustrative choices.
-- The mapping of linguistic labels from Table 3 is not implemented yet; numeric
-  triangular assessments are accepted directly.
+- The paper's numeric triangular assessment baseline accepts explicit numeric
+  inputs directly; the separate proposed Mamdani controller implements its own
+  low/medium/high membership functions and rule base. This is not claimed to be
+  the paper's missing linguistic Table 3 mapping.
 - The security-risk condition follows Eq. (14), whose following prose reverses
   the inequality. This decision is documented in the equation notes.
 - Latency/load calculators use explicit bits/s, cycles/s, Hz, and MB inputs.

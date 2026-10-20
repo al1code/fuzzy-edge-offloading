@@ -56,6 +56,39 @@ def test_low_security_is_restricted_at_every_uncertainty_level() -> None:
     assert max(caps) < 0.15
 
 
+def test_cap_stays_bounded_on_input_grid() -> None:
+    values = [i / 10 for i in range(11)]
+    caps = [
+        evaluate_uncertainty_aware_offloading(security, uncertainty)
+        .allowed_offloading_ratio
+        for security in values
+        for uncertainty in values
+    ]
+    assert all(0.0 <= cap <= 1.0 for cap in caps)
+
+
+def test_high_uncertainty_reduces_cap_for_high_security_anchor() -> None:
+    confident = evaluate_uncertainty_aware_offloading(0.9, 0.1)
+    uncertain = evaluate_uncertainty_aware_offloading(0.9, 0.9)
+    assert confident.allowed_offloading_ratio > uncertain.allowed_offloading_ratio
+
+
+def test_centroid_resolution_is_numerically_stable() -> None:
+    decisions = [
+        evaluate_uncertainty_aware_offloading(
+            security, uncertainty, centroid_resolution=resolution
+        )
+        for resolution in (101, 1001, 5001)
+        for security, uncertainty in ((0.2, 0.7), (0.8, 0.2))
+    ]
+    for offset in (0, 1):
+        values = [
+            decisions[offset + 2 * resolution_index].allowed_offloading_ratio
+            for resolution_index in range(3)
+        ]
+        assert max(values) - min(values) < 0.003
+
+
 def test_trace_shows_the_expected_corner_rule() -> None:
     decision = evaluate_uncertainty_aware_offloading(1.0, 0.0)
 

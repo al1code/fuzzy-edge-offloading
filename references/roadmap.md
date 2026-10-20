@@ -1,5 +1,11 @@
 # Proje Yol Haritasi
 
+> **Guncel durum (2026-10-20):** Teknik uygulama, ozgun Mamdani katkisi ve
+> GUI deney gosterimi buyuk olcude tamamlandi. 750+ test, tekrarlanabilir
+> deney paketleri, policy karsilastirmasi, risk-gecikme grafigi ve link-rate
+> sensitivity akisi calisir durumdadir. Kalanlar agirlikli olarak ek analiz,
+> makale duyarlilik deneyleri ve teslim hazirligidir.
+
 ## Aslinda Ne Yapiyoruz?
 
 Bir fabrika cihazinin hesaplama isini kendi uzerinde mi, bir kenar sunucuda mi,
@@ -49,8 +55,8 @@ yeniden degerlendiririz. Su anki kapsam ogrencinin onayladigi calisma hedefidir.
 | 7 | Adaptif genetik sunucu secimi | Konum kromozomu, uygunluk, elitizm ve adaptif operatorler kayitli butceyle testlidir | Hazir; ayri analitik kontrol modu korunur |
 | 8 | SA-PSO ve BOALBFS butunlestirme | Oran aramasi genetik katmana baglanir; kucuk kesin cozumlerle kalite kontrolu ve buyuk senaryoda calisma testi yapilir | Hazir; yayin disi ayarlar belgeli varsayimdir |
 | 9 | Referans deneyleri | Local/Edge/Local-Edge, coklu seed, sure/risk/yuk/amac, calisma suresi, tablo/grafik ve makaleyle sinirli karsilastirma | Secilen ilk deney hazir: 45 kayit; normalizasyon/yayin uyumu siniri acik |
-| 10 | Ozgun katki | Onceden tanimli soru, degisiklik ve olcutler ayni girdilerle baseline'a karsi denenir | Oran maliyeti calismasi hazir; belirsizlik-duyarli Mamdani denetleyicisi icin kontrollu CLI deneyi ve GUI inceleme akisi eklendi |
-| 11 | GUI, rapor, sunum ve teslim | Son kod adimi olarak sonuc arayuzu; dogrulanmis literatur, 8-12 sayfalik rapor, AI bildirimi, sunum ve temiz ortam/canli demo kontrolu | GUI mevcut motorla uygulandi; rapor/sunum ve nihai teslim kontrolleri acik |
+| 10 | Ozgun katki | Onceden tanimli soru, degisiklik ve olcutler ayni girdilerle baseline'a karsi denenir | Buyuk olcude hazir: Type-1 Mamdani cap politikasi, evaluator/SA-PSO/analitik solver entegrasyonu, sabit-konum policy deneyi, GA sensitivity deneyi, risk-gecikme grafigi ve GUI gosterimi |
+| 11 | GUI, rapor, sunum ve teslim | Son kod adimi olarak sonuc arayuzu; dogrulanmis literatur, 8-12 sayfalik rapor, AI bildirimi, sunum ve temiz ortam/canli demo kontrolu | Kod/GUI hazir: gorev bazli Mamdani aciklamasi, policy ve GA sensitivity deneyleri, grafikler. Rapor, sunum, AI bildirimi ve nihai teslim kontrolu acik |
 
 Literatur okuma, kaynak kaydi, aciklama ve rapor notlari tum surec boyunca
 ilerler; 11. asamada ilk kez baslamaz. Son asama bunlarin tamamlanip teslim
@@ -60,9 +66,11 @@ ogrenciye aciklanir; commit ve push islemlerini ogrenci yapar.
 ## Ne Zaman Bitmis Sayilacak?
 
 - 9. asamanin secilen ilk deneyi ve 10'un sabit-konum deneyi yapildi;
-  katkinin iki arama katmanindaki etkisi de ayri tam-GA deneyiyle kontrol edildi.
-  Aciklayici [GUI](gui.md) mevcut motorla uygulandi; rapor/sunum ve teslim
-  kontrolleri ayridir. Yeni algoritma planlamiyoruz.
+  katkinin iki arama katmanindaki etkisi ayri tam-GA deneyiyle kontrol edildi.
+  Sabit-konum policy deneyinde `SA-PSO`, `Analytical`, `Mamdani SA-PSO` ve
+  `Mamdani Analytical` ayni girdilerle karsilastiriliyor.
+- GUI, gorev bazli kural aciklamasinin yaninda coklu-seed policy ve link-rate
+  sensitivity deneylerini de calistirip kayitli grafiklerini gosterebiliyor.
 - Makalenin iki katmanini birlestiren temel program belgeli varsayimlarla
   calisir. Bu, yayinlanan deneylerin veya butun ders projesinin bitmesi degildir.
 - 9'un ilk baseline deneyleri ve karsilastirma sinirlari [kayitli](experiments.md).
@@ -109,3 +117,38 @@ Bu analitik ozellik, secilen [hesaplama maliyeti katkisi](ratio_comparison.md)
 icin kullanildi. Yeni bir algoritma ailesi eklenmedi; mevcut kontrol hesabi
 once sabit konumlarda, sonra ayni GA ile karsilastirildi. Bu dar kapsamli
 bir muhendislik/maliyet katkisi; bilimsel yenilik veya hoca onayi iddiasi degil.
+
+## Gelistirme sirasi ve tahmini kapanis
+
+Bu takvim kesin teslim tarihi degil, kalan is paketlerinin goreli eforudur.
+
+| Durum | Is paketi | Tahmini efor | Kapanis kaniti |
+| --- | --- | --- | --- |
+| Tamamlandi | Mamdani controller, cap validation ve optimizer entegrasyonu | Bitti | Unit/integration testleri; cap ihlali reddediliyor |
+| Tamamlandi | Sabit-konum baseline vs Mamdani oran karsilastirmasi | Bitti | `ratio_comparison.py --scope policy`, CSV/manifest/grafik |
+| Tamamlandi | GUI'de gorev bazli Mamdani inceleme ve baseline/proposed calistirma | Bitti | Streamlit Mamdani gorunumu ve GUI testleri |
+| Tamamlandi | GUI'de policy deneyi, Pareto grafigi ve GA link-rate sensitivity | Bitti | `Mamdani oran politikasi` ve `Mamdani GA sensitivity` protokolleri |
+| Acik | Kural tabani icin alternatif policy/sensitivity analizi | 1-2 oturum | Ayni seedlerle conservative/balanced secenekleri |
+| Acik | Makale Fig. 4-10 sensitivity runner'i | 1-3 oturum | Server/task/rate/load/weight/iteration tek manifestte |
+| Opsiyonel | Makaledeki bes rakip optimizer | Kapsama bagli | Her rakip ayni evaluator ve butceyle calisir |
+| Teslim | Rapor, IEEE kaynakca, AI kullanim bildirimi, sunum ve canli demo | Kod disi | Ogrenci teslim kontrol listesini tamamlar |
+
+### Her kod degisikliginden sonra kontrol
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -p no:cacheprovider tests/test_fuzzy_controller.py tests/test_ratio_comparison.py tests/test_gui_dashboard.py tests/test_gui_services.py -q
+.\.venv\Scripts\python.exe -m pytest -p no:cacheprovider tests -q
+git diff --check
+```
+
+Ilk komut hizli geri donus testidir; tam test paketi evaluator, optimizer,
+deney ve GUI sozlesmelerini birlikte kontrol eder.
+
+### Teknik sinirlilik
+
+Mevcut 3x3 Type-1 Mamdani kurallari guvenlik ve belirsizlik eksenlerinde
+beklenen genel yonu verir, ancak max aggregation ve clipped output membership
+geometrisi nedeniyle her ara noktada kesin global monotoniclik garantisi
+vermez. Kod bunu evrensel bir garanti olarak sunmaz; [0,1] cap siniri,
+anchor davranis testleri, centroid resolution stability ve kontrollu deney
+metrikleriyle sinirli bir politika olarak belgeler.

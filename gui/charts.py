@@ -4,6 +4,12 @@ import altair as alt
 import pandas as pd
 
 COLORS = ["#16866b", "#d05b45", "#bd8a24", "#4e78a4", "#696d73"]
+CHART_CONFIG = {
+    "background": "#fbfcfc",
+    "view": {"stroke": "#d8e3e2", "strokeWidth": 1},
+    "axis": {"labelColor": "#40504f", "titleColor": "#263635", "gridColor": "#e7eeee"},
+    "legend": {"labelColor": "#40504f", "titleColor": "#263635"},
+}
 
 
 def security_scores(records, threshold):
@@ -53,7 +59,7 @@ def security_scores(records, threshold):
             y="threshold:Q", tooltip=[alt.Tooltip("threshold:Q", title="E\u015fik")]
         )
     )
-    return (points + rule).properties(height=260)
+    return (points + rule).properties(height=260).configure(**CHART_CONFIG)
 
 
 def lines(records, x, y, group, *, x_title, y_title, height=250):
@@ -71,6 +77,7 @@ def lines(records, x, y, group, *, x_title, y_title, height=250):
             ],
         )
         .properties(height=height)
+        .configure(**CHART_CONFIG)
         .interactive()
     )
 
@@ -95,7 +102,7 @@ def bars(records, x, y, *, y_title, group=None, height=260, log=False):
     if group:
         encoding["xOffset"] = f"{group}:N"
         encoding["tooltip"].append(group)
-    return chart.encode(**encoding).properties(height=height)
+    return chart.encode(**encoding).properties(height=height).configure(**CHART_CONFIG)
 
 
 def triangles(assessments, aggregated, perspective):
@@ -131,4 +138,5 @@ def triangles(assessments, aggregated, perspective):
             tooltip=["series:N", "score:Q", "membership:Q"],
         )
         .properties(height=280)
+        .configure(**CHART_CONFIG)
     )

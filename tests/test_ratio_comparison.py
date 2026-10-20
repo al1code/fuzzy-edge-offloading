@@ -99,6 +99,30 @@ def test_all_local_and_selected_zero_preserve_location_semantics() -> None:
     assert any(server.load.weighted_load > 0 for server in result.servers)
 
 
+def test_policy_ratio_comparison_pairs_baseline_and_mamdani() -> None:
+    dataset = generate_synthetic_dataset(SMALL)
+    rows = experiment.compare_policy_ratios(
+        dataset, 0, swarm_config=SWARM
+    )
+
+    assert [row["method"] for row in rows] == list(experiment.POLICY_METHODS)
+    baseline_sapso, baseline_exact, capped_sapso, capped_exact = rows
+    assert {
+        row["sha256"] for row in rows
+    } == {dataset_fingerprint(dataset)}
+    assert all(row["locations"] == "[1, 2, 1]" for row in rows)
+    assert baseline_sapso["mean_allowed_cap"] == capped_sapso["mean_allowed_cap"]
+    assert baseline_exact["mean_allowed_cap"] == capped_exact["mean_allowed_cap"]
+    assert capped_sapso["max_cap_excess"] == 0.0
+    assert capped_exact["max_cap_excess"] == 0.0
+    assert baseline_sapso["plan_evaluations"] == capped_sapso["plan_evaluations"]
+    assert baseline_exact["endpoint_tests"] == capped_exact["endpoint_tests"]
+    assert capped_exact["objective"] >= baseline_exact["objective"]
+    assert capped_exact["uncertainty_weighted_exposure"] <= (
+        baseline_exact["uncertainty_weighted_exposure"] + 1e-12
+    )
+
+
 def test_counts_are_real_calls_and_measurement_order_alternates(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

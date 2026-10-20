@@ -39,11 +39,12 @@ The student requested a GUI on 2026-10-03: after experiment/contribution code,
 the last coding step will expose existing calculations and recorded results,
 without adding a separate computational model.
 
-The current triangular model stores parameters and computes transformations;
-linguistic scoring bands from Table 3 and membership-function evaluation are
-not yet implemented. Before declaring MRR coverage, clarify whether the
-general guideline's rule/inference wording applies to this paper's weighted
-assessment subsystem and which technical scope the instructor expects.
+The paper baseline continues to store numeric triangular parameters and compute
+their transformations. Separately, the project extension in
+`src/fuzzy_controller.py` evaluates low/medium/high membership functions and
+applies a documented Type-1 Mamdani rule base with centroid defuzzification.
+The two layers must remain distinct in the report: the first is the paper
+reproduction, while the second is the project's uncertainty-aware contribution.
 
 ## First Reference Experiment Target
 
