@@ -250,16 +250,14 @@ def _policy_row(
             (
                 max(
                     0.0,
-                    task.decision.offloading_ratio
-                    - caps[task.decision.task_id],
+                    task.decision.offloading_ratio - caps[task.decision.task_id],
                 )
                 for task in evaluation.tasks
             ),
             default=0.0,
         ),
         "offloaded_tasks": sum(
-            task.decision.server_id is not None
-            and task.decision.offloading_ratio > 0.0
+            task.decision.server_id is not None and task.decision.offloading_ratio > 0.0
             for task in evaluation.tasks
         ),
         "endpoint_tests": endpoint_tests,
@@ -399,7 +397,6 @@ def compare_pipelines(
             )
             genetic, calls = result.genetic, result.plan_evaluations
         else:
-            # Same composition as solve_genetic, with endpoint accounting only.
             genetic = search_locations(
                 scenario,
                 analytical_evaluator,

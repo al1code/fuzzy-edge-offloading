@@ -1,5 +1,8 @@
+import json
+from dataclasses import asdict
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 from src.config import (
@@ -119,3 +122,14 @@ def test_load_balance_config_rejects_invalid_weights(
 ) -> None:
     with pytest.raises(ValueError, match="load balance weights"):
         LoadBalanceConfig(*weights)
+
+
+def test_numpy_configuration_scalars_can_be_recorded_as_standard_json() -> None:
+    experiment = ExperimentConfig(np.int64(42), np.int32(3), np.int64(2))
+    security = FuzzySecurityConfig(np.float32(0.5), np.float32(0.25), np.float32(0.25))
+    load = LoadBalanceConfig(np.float32(0.5), np.float32(0.25), np.float32(0.25))
+
+    for config, scalar_type in ((experiment, int), (security, float), (load, float)):
+        values = asdict(config)
+        assert all(type(value) is scalar_type for value in values.values())
+        assert json.loads(json.dumps(values, allow_nan=False)) == values

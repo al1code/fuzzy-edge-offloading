@@ -1,5 +1,8 @@
 # References and Implementation Notes
 
+- [Önce buradan başla: problem, katkı, GUI ve kod okuma sırası](buradan_basla.md)
+- [22 Ekim: gerçek yönerge/kod denetimi, düzeltmeler ve katkı deneyleri](inceleme_2026_10_22.md)
+
 [1] X. Jin, S. Zhang, Y. Ding, and Z. Wang, "Task offloading for multi-server
 edge computing in industrial Internet with joint load balance and fuzzy
 security," *Scientific Reports*, vol. 14, Art. no. 27813, 2024,

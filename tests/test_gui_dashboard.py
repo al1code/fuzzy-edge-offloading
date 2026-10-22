@@ -194,3 +194,72 @@ def test_metric_formatting_retains_tiny_values_and_limits_large_text():
     assert number(0.239139) == "0.239139"
     assert number(1e-10) == "1e-10"
     assert number(1e100, 3) == "1e+100"
+
+
+def test_saved_sensitivity_can_be_inspected_without_replacing_base_inputs(
+    app, monkeypatch, tmp_path
+):
+    from experiments.proposed.uncertainty_mamdani_comparison import run_experiment
+    from src.dataset_io import dataset_fingerprint
+
+    monkeypatch.setattr("gui.dashboard.ROOT", tmp_path)
+    run_experiment(
+        tmp_path / "results" / "sensitivity",
+        data_seeds=(42,),
+        optimizer_seeds=(0,),
+        scenario_config=app.session_state.dataset.configuration,
+        genetic_config=app.session_state.settings[2],
+        swarm_config=app.session_state.settings[3],
+        link_rate_factors=(1.0, 2.0),
+    )
+    original = dataset_fingerprint(app.session_state.dataset)
+    app.radio[0].set_value(VIEWS[4]).run()
+    widget(app.selectbox, "İncelenen bağlantı hızı koşulu").set_value(2.0).run()
+    widget(app.button, "Bu girdiyi ve kararı incele").click().run()
+    assert not app.exception
+    assert dataset_fingerprint(app.session_state.dataset) == original
+    assert app.session_state.bundle_preview[3].link_rate_factor == 2.0
+    assert any("2x bağlantı hızıyla" in item.value for item in app.info)
+
+
+def test_scaled_record_cannot_be_installed_as_unscaled_working_inputs():
+    from types import SimpleNamespace
+
+    from gui.dashboard import open_bundle_in_workspace
+
+    with pytest.raises(ValueError, match="scaled conditions"):
+        open_bundle_in_workspace(
+            None, SimpleNamespace(link_rate_factor=2.0), {}, {}, ()
+        )
+
+
+def test_learning_walkthrough_uses_actual_inputs_without_changing_dataset(monkeypatch):
+    from types import SimpleNamespace
+
+    from gui import dashboard
+    from src.dataset_io import dataset_fingerprint
+
+    dataset = generate_synthetic_dataset(
+        replace(SyntheticScenarioConfig(), experiment=ExperimentConfig(42, 3, 2))
+    )
+    before = dataset_fingerprint(dataset)
+    tables = []
+    messages = []
+    monkeypatch.setattr(dashboard, "table", lambda rows: tables.append(rows))
+    monkeypatch.setattr(
+        dashboard,
+        "st",
+        SimpleNamespace(
+            **{
+                name: lambda text: messages.append(text)
+                for name in ("subheader", "markdown", "caption", "info")
+            }
+        ),
+    )
+    dashboard.learning_view(dataset)
+    task = dataset.scenario.tasks[0]
+    assert tables[-1][0]["Toplam (s)"] == pytest.approx(
+        task.task.required_cpu_cycles / task.local_cpu_cycles_per_second
+    )
+    assert tables[0][0]["İzinli üst oran (%)"] > tables[0][1]["İzinli üst oran (%)"]
+    assert dataset_fingerprint(dataset) == before

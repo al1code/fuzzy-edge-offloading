@@ -1,8 +1,9 @@
-"""Core domain models for the fuzzy task-offloading study."""
+"""Task, server, and triangular fuzzy-number models."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from math import isfinite
 
 from src.validation import validate_finite, validate_positive
 
@@ -22,25 +23,39 @@ class TriangularFuzzyNumber:
         if not self.low <= self.modal <= self.high:
             msg = "triangular fuzzy number must satisfy low <= modal <= high"
             raise ValueError(msg)
+        # Validate before conversion; do not accept booleans or numeric strings.
+        for name in ("low", "modal", "high"):
+            object.__setattr__(self, name, float(getattr(self, name)))
 
     def centroid(self) -> float:
         """Return the standard centroid defuzzification value."""
 
-        return (self.low + self.modal + self.high) / 3.0
+        result = (self.low + self.modal + self.high) / 3.0
+        if isfinite(result):
+            return result
+        # The mean is bounded by the inputs even when the unscaled sum overflows.
+        scale = max(abs(self.low), abs(self.modal), abs(self.high))
+        return scale * (
+            (self.low / scale + self.modal / scale + self.high / scale) / 3.0
+        )
 
     def paper_transformation_value(self) -> float:
         """Return (low + 4 * modal + high) / 6 from the paper's Eq. (12)."""
 
-        return (self.low + 4.0 * self.modal + self.high) / 6.0
+        result = (self.low + 4.0 * self.modal + self.high) / 6.0
+        if isfinite(result):
+            return result
+        scale = max(abs(self.low), abs(self.modal), abs(self.high))
+        return scale * (
+            (self.low / scale + 4.0 * (self.modal / scale) + self.high / scale) / 6.0
+        )
 
 
 @dataclass(frozen=True, slots=True)
 class Task:
-    """Task with data in decimal MB and total required CPU cycles.
+    """Task data in decimal MB (8,000,000 bits) and total CPU cycles D_i * C_i.
 
-    ``required_cpu_cycles`` represents D_i * C_i in the paper, not its
-    per-bit coefficient C_i. One MB equals 8,000,000 bits. A deadline is
-    project metadata; it is not part of the paper's task tuple H_i.
+    The deadline is metadata, outside the paper's task tuple H_i.
     """
 
     task_id: str
@@ -55,15 +70,15 @@ class Task:
         validate_positive(self.data_size_mb, "data_size_mb")
         validate_positive(self.required_cpu_cycles, "required_cpu_cycles")
         validate_positive(self.deadline_seconds, "deadline_seconds")
+        for name in ("data_size_mb", "required_cpu_cycles", "deadline_seconds"):
+            object.__setattr__(self, name, float(getattr(self, name)))
 
 
 @dataclass(frozen=True, slots=True)
 class EdgeServer:
-    """Resource inventory, not yet a full implementation of Eqs. (6)-(8).
+    """Server inventory with CPU in cycles/s, link rates in Mbps, memory in MB.
 
-    Uplink/downlink Mbps describe link rates, not the wireless bandwidth
-    capacity Lambda in Hz. CPU cycles per second are not interchangeable
-    with the MIPS capacity reported in the paper's Table 4.
+    Link rates differ from wireless bandwidth in Hz; cycles/s differ from MIPS.
     """
 
     server_id: str
@@ -82,3 +97,10 @@ class EdgeServer:
         validate_positive(self.uplink_bandwidth_mbps, "uplink_bandwidth_mbps")
         validate_positive(self.downlink_bandwidth_mbps, "downlink_bandwidth_mbps")
         validate_positive(self.memory_capacity_mb, "memory_capacity_mb")
+        for name in (
+            "cpu_capacity_cycles_per_second",
+            "uplink_bandwidth_mbps",
+            "downlink_bandwidth_mbps",
+            "memory_capacity_mb",
+        ):
+            object.__setattr__(self, name, float(getattr(self, name)))

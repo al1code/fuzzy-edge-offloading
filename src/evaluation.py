@@ -141,8 +141,7 @@ def evaluate_plan(
         decision = by_task[profile.task.task_id]
         if (
             ratio_caps is not None
-            and decision.offloading_ratio
-            > ratio_caps[profile.task.task_id] + 1e-12
+            and decision.offloading_ratio > ratio_caps[profile.task.task_id] + 1e-12
         ):
             raise ValueError(
                 f"offloading ratio for {profile.task.task_id} exceeds its policy cap"

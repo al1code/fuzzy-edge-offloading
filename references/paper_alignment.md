@@ -89,10 +89,17 @@ bir karar korumasi koyuyor:
 5. Bu cap, ortak evaluator tarafindan zorlanir; SA-PSO ve GA+SA-PSO cap'i
    ihlal edemez.
 
-Boylece ayni `S` degerinde daha genis/uzlasmasiz uzman gorusu daha temkinli
-offloading uretir. Bu, makaledeki risk formuluyle ifade edilmeyen yeni bir
+Bu politika aynı `S` değerinde üçgen genişliğini ayrıca kullanır. Genişlik,
+uzmanlar arası anlaşmazlık ölçüsü değildir; ayrı kesin puan veren uzmanların
+ağırlıklı toplamı sıfır genişlikli olabilir. Kural tabanı belirli köşe
+değerlerinde daha geniş değerlendirmeye daha kısıtlı izin verir; bütün ara
+noktalarda kesin monotonluk garantisi yoktur. Bu, makaledeki risk formuluyle ifade edilmeyen yeni bir
 belirsizlik-duyarliligi katmanidir; `uncertainty_weighted_exposure` ise
 tanisal bir metrik olup saldiri olasiligi degildir.
+
+22 Ekim'deki çoklu koşu ve sabit/yalnız-S/tam-SU ablation sonuçları
+[yeni denetim notunda](inceleme_2026_10_22.md) bulunur. Eski küçük örnekler
+genel üstünlük kanıtı sayılmamalıdır.
 
 Kucuk kontrollu bir kosuda (3 gorev, 2 sunucu, seed 42, ayni GA/SA-PSO
 butcesi, link hizi 2x) su gozlenmistir:

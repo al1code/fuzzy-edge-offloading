@@ -1,7 +1,21 @@
 # Proje Yol Haritasi
 
+> **23 Ekim 2026 — kod kapanışı:** GUI dahil 778 test geçti. Seçili uygulama
+> kapsamı dondurulabilir; gerekli hata düzeltmeleri dışında öncelik rapor,
+> sunum ve savunma hazırlığıdır. [Dört doğrulanmış GUI örneği ve sunum sırası](sunum_demo_akisi.md).
+> Bu teknik kapanış, rapor/sunumun veya projeye özel MRR onayının tamamlandığı
+> anlamına gelmez.
+
+> **22 Ekim 2026 denetim eki:** Gerçek yönerge okundu. Bütün belgeler,
+> **sunum dosyası dahil 27 Ekim'de** Classroom'a teslim edilmeli; 3 Kasım
+> sunumların başlangıcıdır. Kod ve katkı için güncel kanıt/sınırlılıklar
+> [inceleme notunda](inceleme_2026_10_22.md). GUI'ye Projeyi Anla ekranı eklendi;
+> Mamdani hız koşullarının özeti ve kayıt tekrar hesabı düzeltildi. Aşağıdaki
+> 20 Ekim durum notu tarihlidir; teslimin tamamen kapandığı anlamına gelmez.
+
 > **Guncel durum (2026-10-20):** Teknik uygulama, ozgun Mamdani katkisi ve
-> GUI deney gosterimi buyuk olcude tamamlandi. 750+ test, tekrarlanabilir
+> GUI deney gosterimi buyuk olcude tamamlandi. GUI'nin yeni kullanici rehberi,
+> renkli metrik kartlari ve sade baslangic akisi da tamamlandi. 750+ test, tekrarlanabilir
 > deney paketleri, policy karsilastirmasi, risk-gecikme grafigi ve link-rate
 > sensitivity akisi calisir durumdadir. Kalanlar agirlikli olarak ek analiz,
 > makale duyarlilik deneyleri ve teslim hazirligidir.
@@ -56,7 +70,7 @@ yeniden degerlendiririz. Su anki kapsam ogrencinin onayladigi calisma hedefidir.
 | 8 | SA-PSO ve BOALBFS butunlestirme | Oran aramasi genetik katmana baglanir; kucuk kesin cozumlerle kalite kontrolu ve buyuk senaryoda calisma testi yapilir | Hazir; yayin disi ayarlar belgeli varsayimdir |
 | 9 | Referans deneyleri | Local/Edge/Local-Edge, coklu seed, sure/risk/yuk/amac, calisma suresi, tablo/grafik ve makaleyle sinirli karsilastirma | Secilen ilk deney hazir: 45 kayit; normalizasyon/yayin uyumu siniri acik |
 | 10 | Ozgun katki | Onceden tanimli soru, degisiklik ve olcutler ayni girdilerle baseline'a karsi denenir | Buyuk olcude hazir: Type-1 Mamdani cap politikasi, evaluator/SA-PSO/analitik solver entegrasyonu, sabit-konum policy deneyi, GA sensitivity deneyi, risk-gecikme grafigi ve GUI gosterimi |
-| 11 | GUI, rapor, sunum ve teslim | Son kod adimi olarak sonuc arayuzu; dogrulanmis literatur, 8-12 sayfalik rapor, AI bildirimi, sunum ve temiz ortam/canli demo kontrolu | Kod/GUI hazir: gorev bazli Mamdani aciklamasi, policy ve GA sensitivity deneyleri, grafikler. Rapor, sunum, AI bildirimi ve nihai teslim kontrolu acik |
+| 11 | GUI, rapor, sunum ve teslim | Son kod adimi olarak sonuc arayuzu; dogrulanmis literatur, 8-12 sayfalik rapor, AI bildirimi, sunum ve temiz ortam/canli demo kontrolu | Kod/GUI hazir: gorev bazli Mamdani aciklamasi, policy ve GA sensitivity deneyleri, grafikler, renkli metric kartlari, baslangic rehberi ve form ici ornekler. Rapor, sunum, AI bildirimi ve nihai teslim kontrolu acik |
 
 Literatur okuma, kaynak kaydi, aciklama ve rapor notlari tum surec boyunca
 ilerler; 11. asamada ilk kez baslamaz. Son asama bunlarin tamamlanip teslim
@@ -71,6 +85,8 @@ ogrenciye aciklanir; commit ve push islemlerini ogrenci yapar.
   `Mamdani Analytical` ayni girdilerle karsilastiriliyor.
 - GUI, gorev bazli kural aciklamasinin yaninda coklu-seed policy ve link-rate
   sensitivity deneylerini de calistirip kayitli grafiklerini gosterebiliyor.
+  Yeni kullanici akisinda temel ayarlar gorunur, ileri kaynak/kanal ayarlari
+  kapali expander icinde ve sayfanin amacina gore aciklamali olarak sunulur.
 - Makalenin iki katmanini birlestiren temel program belgeli varsayimlarla
   calisir. Bu, yayinlanan deneylerin veya butun ders projesinin bitmesi degildir.
 - 9'un ilk baseline deneyleri ve karsilastirma sinirlari [kayitli](experiments.md).

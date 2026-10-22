@@ -101,15 +101,11 @@ def test_all_local_and_selected_zero_preserve_location_semantics() -> None:
 
 def test_policy_ratio_comparison_pairs_baseline_and_mamdani() -> None:
     dataset = generate_synthetic_dataset(SMALL)
-    rows = experiment.compare_policy_ratios(
-        dataset, 0, swarm_config=SWARM
-    )
+    rows = experiment.compare_policy_ratios(dataset, 0, swarm_config=SWARM)
 
     assert [row["method"] for row in rows] == list(experiment.POLICY_METHODS)
     baseline_sapso, baseline_exact, capped_sapso, capped_exact = rows
-    assert {
-        row["sha256"] for row in rows
-    } == {dataset_fingerprint(dataset)}
+    assert {row["sha256"] for row in rows} == {dataset_fingerprint(dataset)}
     assert all(row["locations"] == "[1, 2, 1]" for row in rows)
     assert baseline_sapso["mean_allowed_cap"] == capped_sapso["mean_allowed_cap"]
     assert baseline_exact["mean_allowed_cap"] == capped_exact["mean_allowed_cap"]
@@ -236,6 +232,8 @@ def test_cli_runs_small_experiment_and_rejects_existing_output(
     output = tmp_path / "cli"
     command = [
         sys.executable,
+        "-X",
+        "utf8",
         "-B",
         "-m",
         "experiments.proposed.ratio_comparison",
@@ -262,7 +260,7 @@ def test_cli_runs_small_experiment_and_rejects_existing_output(
     ]
     kwargs = {
         "capture_output": True,
-        "text": True,
+        "encoding": "utf-8",
         "cwd": Path(__file__).resolve().parents[1],
         "timeout": 30,
     }

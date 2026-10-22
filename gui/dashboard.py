@@ -14,6 +14,7 @@ from gui import charts
 from gui.services import (
     METHODS,
     UNCERTAINTY_MAMDANI_METHOD,
+    bundle_configuration,
     bundle_statistics,
     context_key,
     evaluate_manual,
@@ -61,6 +62,7 @@ VIEWS = (
     "\u00c7\u00f6z\u00fcm Kar\u015f\u0131la\u015ft\u0131rmas\u0131",
     "Deney Kay\u0131tlar\u0131",
     "Mamdani Katk\u0131s\u0131",
+    "Projeyi Anla",
 )
 COMPARISON_METHODS = METHODS + (UNCERTAINTY_MAMDANI_METHOD,)
 LABELS = {
@@ -156,9 +158,24 @@ def sidebar():
             key="view",
             label_visibility="collapsed",
         )
+        with st.expander("Yeni ba\u015flayanlar i\u00e7in", expanded=True):
+            st.markdown(
+                "**\u00d6nerilen ilk deneme**  \n"
+                "Seed `42`, 3 g\u00f6rev, 2 sunucu ile ba\u015fla. "
+                "Sonra sadece bir parametreyi de\u011fi\u015ftirip sonucu kar\u015f\u0131la\u015ft\u0131r."
+            )
+            st.caption(
+                "Seed'i de\u011fi\u015ftirirsen veri de\u011fi\u015fir. G\u00fcvenlik e\u015fi\u011fi, "
+                "ama\u00e7 a\u011f\u0131rl\u0131klar\u0131 ve arama b\u00fct\u00e7esi ayn\u0131 kal\u0131rsa "
+                "kar\u015f\u0131la\u015ft\u0131rma daha adil olur."
+            )
         st.divider()
         with st.form("scenario_form", border=False):
             st.subheader("Senaryo girdileri")
+            st.caption(
+                "Bu b\u00f6l\u00fcm veri \u00fcretir. Sunumda ilk olarak seed, g\u00f6rev "
+                "ve sunucu say\u0131s\u0131n\u0131 de\u011fi\u015ftirmen yeterlidir."
+            )
             seed = st.number_input(
                 "Veri seed",
                 min_value=0,
@@ -277,6 +294,16 @@ def sidebar():
             except (TypeError, ValueError, OverflowError) as exc:
                 st.error(f"Senaryo olu\u015fturulamad\u0131: {exc}")
         with st.expander("Ama\u00e7 ve arama ayarlar\u0131"):
+            st.caption(
+                "Girilen ağırlıklar toplamlarına bölünür. Örneğin 1 / 1 / 1 "
+                "ile 30 / 30 / 30 aynı tercihi verir. Geçerli yüzdeler üst "
+                "özetin altında gösterilir."
+            )
+            st.caption(
+                "Ama\u00e7 a\u011f\u0131rl\u0131klar\u0131 F'nin hangi bile\u015fene "
+                "daha fazla \u00f6nem verdi\u011fini; GA/SA-PSO ayarlar\u0131 ise "
+                "arama kalitesi ve maliyetini belirler."
+            )
             objective, load, genetic, swarm, seed = st.session_state.settings
             with st.form("settings_form", border=False):
                 st.markdown("**Ama\u00e7 a\u011f\u0131rl\u0131klar\u0131 (%)**")
@@ -689,11 +716,10 @@ def mamdani_view(data, run, settings):
 
     a, b, c = st.columns(3)
     a.metric("Makale güvenlik puanı S", number(task_policy.security_level))
-    b.metric(
-        "Değerlendirme belirsizliği U", number(task_policy.assessment_uncertainty)
-    )
+    b.metric("Değerlendirme belirsizliği U", number(task_policy.assessment_uncertainty))
     c.metric(
-        "Veri kaynaklı izinli üst oran", f"%{100 * task_policy.allowed_offloading_ratio:.2f}"
+        "Veri kaynaklı izinli üst oran",
+        f"%{100 * task_policy.allowed_offloading_ratio:.2f}",
     )
     st.caption(
         "U, uzmanlar ağırlıklandırıldıktan sonra üç perspektifteki üçgen "
@@ -723,8 +749,11 @@ def mamdani_view(data, run, settings):
         0.01,
         key=f"mamdani_uncertainty_{st.session_state.epoch}_{index}",
     )
-    decision = evaluate_uncertainty_aware_offloading(
-        live_security, live_uncertainty
+    decision = evaluate_uncertainty_aware_offloading(live_security, live_uncertainty)
+    st.caption(
+        "Bu iki sürgü yalnız kural motorunu denemek içindir; senaryoyu veya "
+        "optimizasyonda kullanılan görev sınırlarını değiştirmez. Gerçek görev "
+        "girdisini değiştirmek için Bulanık Güvenlik ekranındaki formu uygula."
     )
     st.metric(
         "Canlı izinli en yüksek offloading oranı x̄",
@@ -732,33 +761,37 @@ def mamdani_view(data, run, settings):
         help="Önerilen BOALBFS bu görev için yalnızca 0 ile bu üst sınır arasında arar.",
     )
 
-    input_records = [
-        {
-            "Değişken": "Güvenlik S",
-            "Küme": {"low": "Düşük", "medium": "Orta", "high": "Yüksek"}[d.label],
-            "Üyelik derecesi": d.value,
-        }
-        for d in decision.security_memberships
-    ] + [
-        {
-            "Değişken": "Belirsizlik U",
-            "Küme": {"low": "Düşük", "medium": "Orta", "high": "Yüksek"}[d.label],
-            "Üyelik derecesi": d.value,
-        }
-        for d in decision.uncertainty_memberships
-    ] + [
-        {
-            "Değişken": "Çıktı x̄",
-            "Küme": {
-                "restricted": "Kısıtlı",
-                "low": "Düşük",
-                "medium": "Orta",
-                "high": "Yüksek",
-            }[d.label],
-            "Üyelik derecesi": d.value,
-        }
-        for d in decision.output_memberships
-    ]
+    input_records = (
+        [
+            {
+                "Değişken": "Güvenlik S",
+                "Küme": {"low": "Düşük", "medium": "Orta", "high": "Yüksek"}[d.label],
+                "Üyelik derecesi": d.value,
+            }
+            for d in decision.security_memberships
+        ]
+        + [
+            {
+                "Değişken": "Belirsizlik U",
+                "Küme": {"low": "Düşük", "medium": "Orta", "high": "Yüksek"}[d.label],
+                "Üyelik derecesi": d.value,
+            }
+            for d in decision.uncertainty_memberships
+        ]
+        + [
+            {
+                "Değişken": "Çıktı x̄",
+                "Küme": {
+                    "restricted": "Kısıtlı",
+                    "low": "Düşük",
+                    "medium": "Orta",
+                    "high": "Yüksek",
+                }[d.label],
+                "Üyelik derecesi": d.value,
+            }
+            for d in decision.output_memberships
+        ]
+    )
     st.altair_chart(
         charts.bars(
             input_records,
@@ -808,13 +841,18 @@ def mamdani_view(data, run, settings):
             "tanımlanır; sayısal centroid kod tarafından hesaplanır."
         )
 
-    plan_task = next(item for item in run.evaluation.tasks if item.decision.task_id == task_id)
+    plan_task = next(
+        item for item in run.evaluation.tasks if item.decision.task_id == task_id
+    )
     plan_ratio = plan_task.decision.offloading_ratio
     st.markdown("#### Ekrandaki planla ilişki")
     p_left, p_right, p_last = st.columns(3)
     p_left.metric("Gösterilen plan", run.method)
     p_right.metric("Planın oranı", f"%{100 * plan_ratio:.2f}")
-    p_last.metric("Bu görevin veri kaynaklı cap'i", f"%{100 * task_policy.allowed_offloading_ratio:.2f}")
+    p_last.metric(
+        "Bu görevin veri kaynaklı cap'i",
+        f"%{100 * task_policy.allowed_offloading_ratio:.2f}",
+    )
     if plan_ratio <= task_policy.allowed_offloading_ratio + 1e-12:
         st.success("Gösterilen plan bu görev için Mamdani üst sınırına uyuyor.")
     else:
@@ -831,25 +869,33 @@ def mamdani_view(data, run, settings):
     ):
         runs = []
         failures = []
-        with st.status("Aynı seed ve bütçeyle çözümler hesaplanıyor...", expanded=True) as status:
+        with st.status(
+            "Aynı seed ve bütçeyle çözümler hesaplanıyor...", expanded=True
+        ) as status:
             for method, runner in (
-                ("BOALBFS baseline", lambda: run_method(
-                    data,
-                    "BOALBFS",
-                    seed=seed,
-                    genetic=genetic,
-                    swarm=swarm,
-                    objective=settings[0],
-                    load=load,
-                )),
-                ("Önerilen Mamdani", lambda: run_uncertainty_mamdani(
-                    data,
-                    seed=seed,
-                    genetic=genetic,
-                    swarm=swarm,
-                    objective=settings[0],
-                    load=load,
-                )),
+                (
+                    "BOALBFS baseline",
+                    lambda: run_method(
+                        data,
+                        "BOALBFS",
+                        seed=seed,
+                        genetic=genetic,
+                        swarm=swarm,
+                        objective=settings[0],
+                        load=load,
+                    ),
+                ),
+                (
+                    "Önerilen Mamdani",
+                    lambda: run_uncertainty_mamdani(
+                        data,
+                        seed=seed,
+                        genetic=genetic,
+                        swarm=swarm,
+                        objective=settings[0],
+                        load=load,
+                    ),
+                ),
             ):
                 try:
                     st.write(method)
@@ -1027,7 +1073,7 @@ def task_view(data, run, objective, load):
         "Bu e\u011friler tek g\u00f6rev / sabit sunucu i\u00e7indir. Mevcut modelde cihaz, iletim ve sunucu s\u00fcreleri toplan\u0131r; paralel bitirme zaman\u0131 hesaplanmaz."
     )
     with st.expander("Kablosuz ba\u011flant\u0131 girdileri"):
-        st.latex(r"r=B\log_2\left(1+\frac{Pg}{\sigma B}\right)")
+        st.latex(r"r=b\log_2\left(1+\frac{p g^2}{b\zeta}\right)")
         table(
             [
                 {
@@ -1255,7 +1301,7 @@ def result_charts(records, *, aggregate=False):
 
 
 def interface_guide(view):
-    """Explain the selected dashboard view during a live demonstration."""
+    """Describe the selected dashboard view."""
 
     guides = {
         "Senaryo": "Seed, görev/sunucu sayısı ve model parametreleri burada belirlenir. Aynı seed aynı sentetik girdileri üretir.",
@@ -1264,10 +1310,152 @@ def interface_guide(view):
         "Çözüm Karşılaştırması": "Local, Edge, BOALBFS, Analytical ve küçük senaryoda Exact aynı senaryoda karşılaştırılır. F düşük olduğunda daha iyidir.",
         "Deney Kayıtları": "Çoklu-seed deneyleri manifest, CSV ve checksum ile kaydedilir; policy deneyinde baseline ve Mamdani cap karşılaştırılır.",
         "Mamdani Katkısı": "Güvenlik S ve belirsizlik U, görev bazlı offloading cap üretir; aktif kurallar ve cap'in plana etkisi gösterilir.",
+        "Projeyi Anla": "Problemi, makaledeki yöntemi, bizim katkımızı ve ayarların neyi değiştirdiğini buradan öğren.",
     }
     with st.container(border=True):
         st.markdown(f"**{view} ekranı nasıl okunur?**")
         st.caption(guides[view])
+
+
+def learning_view(data):
+    """Explain inputs, policy decisions, and modeled latency."""
+
+    st.subheader("Önce büyük resmi anlayalım")
+    st.markdown(
+        "Bir fabrika cihazının hesaplama işi var. İşin tamamını cihazda yapabilir "
+        "veya bir bölümünü yakındaki sunucuya gönderebilir. Sunucu daha hızlı "
+        "hesaplasa bile veriyi göndermek zaman alır. **Ne kadarını, hangi "
+        "sunucuya göndermek uygun?** Programımız bu kararı bir model içinde arar."
+    )
+    st.markdown(
+        "**Makaledeki yöntem (baseline):** uzmanların üçgensel değerlendirmelerinden "
+        "güvenlik puanı S ve model riski hesaplanır. GA konumu, SA-PSO gönderim "
+        "oranını arar. Süre, risk ve sunucu yük farkı F puanında birleştirilir.\n\n"
+        "**Bizim ana katkımız:** S'nin yanında değerlendirme üçgenlerinin "
+        "ortalama genişliği U da kullanılır. Dokuz Mamdani kuralı, gönderilebilecek "
+        "en yüksek oranı belirler. Örneğin üst sınır %30 ise optimizer %0–30 "
+        "arasında arar; %30 göndermek zorunda değildir.\n\n"
+        "**Diğer çalışma:** Analytical, sabit sunucu seçimindeki oranı modelin "
+        "doğrusal yapısından hesaplar. Bütün sunucu atamalarını en iyi şekilde "
+        "bulduğu anlamına gelmez. GUI ise bu hesapları görüp denememizi sağlar."
+    )
+    st.info(
+        "Düşük F, bu modelin tercihlerine göre daha iyi demektir. Başarı yüzdesi "
+        "veya gerçek saldırı olasılığı değildir. Daha az göndermek model riskini "
+        "azaltırken işi cihazda tutup gecikmeyi artırabilir."
+    )
+    st.markdown("#### Aynı güvenlik puanı, farklı değerlendirme genişliği")
+    examples = []
+    for triangle, width in (("(0.7, 0.7, 0.7)", 0.0), ("(0.4, 0.7, 1.0)", 0.6)):
+        cap = evaluate_uncertainty_aware_offloading(0.7, width).allowed_offloading_ratio
+        examples.append(
+            {
+                "Üç perspektifte aynı üçgen": triangle,
+                "Güvenlik S": 0.7,
+                "Genişlik U": width,
+                "İzinli üst oran (%)": 100 * cap,
+            }
+        )
+    table(examples)
+    st.caption(
+        "Bunlar açıklama örnekleridir. U, uzmanlar arası anlaşmazlığı ölçmez: "
+        "iki uzman ayrı ama kesin puan verse bile her üçgenin genişliği sıfır olabilir. "
+        "Kurallar ve üyelik şekilleri proje tercihidir; gerçek güvenlik garantisi değildir."
+    )
+    st.markdown("#### Ayarı değiştirince ne değişir?")
+    table(
+        [
+            {
+                "Ayar": "Veri seed / görev sayısı",
+                "Etkisi": "Yeni sentetik girdi üretir; Senaryoyu oluştur ile uygulanır. Seed tek başına veri değildir.",
+            },
+            {
+                "Ayar": "Sunucu sayısı",
+                "Etkisi": "Seçenekleri ve toplam kapasiteyi değiştirir. Aynı seed ile link girdileri de değişebilir.",
+            },
+            {
+                "Ayar": "Güvenlik eşiği",
+                "Etkisi": "S eşikten düşükse risk doğar. Eşik artarsa sabit görevde risk azalmaz; otomatik olarak S değişmez.",
+            },
+            {
+                "Ayar": "Süre / Risk / Yük ağırlıkları",
+                "Etkisi": "Neye önem verildiğini değiştirir. Ayarları uygula ve çözümleri tekrar çalıştır.",
+            },
+            {
+                "Ayar": "Cihaz CPU",
+                "Etkisi": "Sabit görev için yerel hesaplama süresini değiştirir.",
+            },
+            {
+                "Ayar": "Görev CPU tahsisi / sunucu kapasitesi",
+                "Etkisi": "Tahsis edge hesaplama hızını, toplam kapasite kaç rezervasyonun sığacağını belirler.",
+            },
+            {
+                "Ayar": "Güç / kanal / gürültü",
+                "Etkisi": "Kablosuz hızı ve iletim süresini değiştirir. Envanter Mbps alanı bu hızı belirlemez.",
+            },
+            {
+                "Ayar": "Arama seed / GA / SA-PSO bütçesi",
+                "Etkisi": "Aramayı değiştirir; veri aynı kalır. Büyük bütçe daha çok hesap demektir, optimum garantisi değildir.",
+            },
+            {
+                "Ayar": "Tek görev gönderim sürgüsü",
+                "Etkisi": "Yalnız seçilen görevi inceler; ekrandaki tam planı değiştirmez.",
+            },
+            {
+                "Ayar": "Mamdani S / U sürgüleri",
+                "Etkisi": "Yalnız kural denemesidir; optimize edilen görev girdilerini değiştirmez.",
+            },
+            {
+                "Ayar": "Deadline / envanter hızı",
+                "Etkisi": "Mevcut modelde bilgi alanıdır; deadline kısıtı uygulanmaz.",
+            },
+        ]
+    )
+    st.markdown("#### Şimdi seçili veride tek bir görevin hesabını gör")
+    task = data.scenario.tasks[0]
+    server = data.scenario.servers[0]
+    link = next(
+        link
+        for link in data.scenario.links
+        if link.task_id == task.task.task_id
+        and link.server_id == server.server.server_id
+    )
+    rows = []
+    for ratio in (0.0, 0.5, 1.0):
+        latency = calculate_task_latency(
+            task.task,
+            offloading_ratio=ratio,
+            local_cpu_cycles_per_second=task.local_cpu_cycles_per_second,
+            edge_cpu_cycles_per_second=server.allocated_cpu_cycles_per_second,
+            transmission_rate_bits_per_second=link.rate_bits_per_second,
+        )
+        rows.append(
+            {
+                "Gönderim (%)": 100 * ratio,
+                "Cihaz (s)": latency.local_seconds,
+                "İletim (s)": latency.transmission_seconds,
+                "Sunucu (s)": latency.edge_seconds,
+                "Toplam (s)": latency.total_seconds,
+            }
+        )
+    table(rows)
+    st.caption(
+        f"{task.task.task_id} / {server.server.server_id}: gerçek seçili girdilerin "
+        "tek görev hesabıdır; çok görevli uygunluk veya optimum çözüm iddiası yoktur. "
+        "Üç süre toplanır. Üstteki özet kartları ise gösterilen tam plana aittir."
+    )
+    st.markdown("#### Kodları hangi sırayla okumalıyım?")
+    st.markdown(
+        "1. `models.py` ve `config.py`: görev/sunucu verileri ve ayarlar.\n"
+        "2. `fuzzy_security.py`: uzman üçgeni → S → risk.\n"
+        "3. `latency.py`, `load_balance.py`, `objective.py`: süre, yük ve F.\n"
+        "4. `evaluation.py`: verilen tam planın doğru ve uygun olup olmadığını hesaplar.\n"
+        "5. `optimizers/genetic.py`, `sapso.py`: farklı planları deneyip en iyisini arar.\n"
+        "6. `fuzzy_controller.py`: bizim S/U → üst oran katkımız.\n"
+        "7. `gui/services.py`, `dashboard.py`: bu hesapları ekrana bağlar.\n\n"
+        "İlk deneme: 3 görev, 2 sunucu, seed 42 ile başla; önce Görev ve Sunucular, "
+        "sonra Bulanık Güvenlik, Çözüm Karşılaştırması ve Mamdani Katkısı ekranlarına geç."
+    )
 
 
 def experiments_view(data, settings):
@@ -1391,6 +1579,19 @@ def experiments_view(data, settings):
         st.warning("Bu pakette uygulanabilir karar yok.")
         return
     stats = pd.DataFrame(bundle_statistics(rows))
+    if "link_rate_factor" in stats.columns:
+        selected_factor = st.selectbox(
+            "İncelenen bağlantı hızı koşulu",
+            sorted(stats["link_rate_factor"].unique()),
+            format_func=lambda value: f"{value:g}x temel bağlantı hızı",
+        )
+        stats = stats.loc[stats["link_rate_factor"] == selected_factor]
+        valid = [r for r in valid if float(r["link_rate_factor"]) == selected_factor]
+        st.caption(
+            "Tablo ve aşağıdaki karşılaştırma yalnız seçilen hız koşulunu gösterir. "
+            "Hız değiştiğinde normalizasyon da değişebilir; farklı koşulların F "
+            "değerlerinden tek başına performans artışı yüzdesi çıkarma."
+        )
     st.dataframe(stats, hide_index=True, width="stretch")
     if manifest.get("experiment") == "uncertainty-aware-mamdani-v1":
         sensitivity_plot = folder / "comparison.png"
@@ -1455,40 +1656,34 @@ def experiments_view(data, settings):
     if st.button("Bu girdiyi ve karar\u0131 incele", icon=":material/open_in_new:"):
         try:
             loaded, run = restore_bundle_run(folder, valid[row_index], manifest)
-            objective = ObjectiveConfig(**manifest["objective_weights"])
-            load = LoadBalanceConfig(**manifest["load_weights"])
-            genetic = (
-                GeneticSearchConfig(**manifest["genetic_config"])
-                if "genetic_config" in manifest
-                else settings[2]
-            )
-            swarm = SwarmSearchConfig(**manifest["swarm_config"])
-            if (
-                genetic.population_size > 30
-                or genetic.generations > 30
-                or swarm.particle_count > 24
-                or swarm.iterations > 60
-            ):
-                raise ValueError(
-                    "Paketin arama ayarlar\u0131 GUI s\u0131n\u0131r\u0131n\u0131 a\u015f\u0131yor; mevcut CLI ile incelenebilir."
+            if run.link_rate_factor != 1.0:
+                st.session_state.bundle_preview = (str(folder), row_index, loaded, run)
+            else:
+                open_bundle_in_workspace(
+                    loaded, run, manifest, valid[row_index], settings
                 )
-            install_dataset(loaded, source="experiment")
-            st.session_state.settings = (
-                objective,
-                load,
-                genetic,
-                swarm,
-                int(valid[row_index]["optimizer_seed"]),
-            )
-            st.session_state.runs = [run]
-            st.session_state.run_context = context_key(
-                loaded, *st.session_state.settings
-            )
-            st.session_state.next_view = VIEWS[2]
-            st.rerun()
         except (ValueError, TypeError, OSError, KeyError) as exc:
-            st.error(f"Karar tekrar hesaplanamad\u0131: {exc}")
-    with st.expander("Ham kay\u0131tlar, ayarlar ve s\u0131n\u0131rlar"):
+            st.error(f"Karar tekrar hesaplanamadı: {exc}")
+    preview = st.session_state.get("bundle_preview")
+    if preview and preview[:2] == (str(folder), row_index):
+        loaded, saved_run = preview[2:]
+        if saved_run.link_rate_factor == float(
+            valid[row_index].get("link_rate_factor", 1)
+        ):
+            st.markdown("#### Kaydın doğrulanmış planı")
+            st.info(
+                f"Bu kayıt {saved_run.link_rate_factor:g}x bağlantı hızıyla yeniden "
+                "hesaplandı. Ayrıntılar kayıt üzerinde gösteriliyor; çalışma "
+                "senaryosundaki temel kablosuz girdiler değiştirilmedi."
+            )
+            st.write(
+                f"Yöntem: {saved_run.method} | "
+                f"F: {number(saved_run.evaluation.objective.value)} | "
+                f"Toplam süre: {number(saved_run.evaluation.total_latency_seconds)} s | "
+                f"Model riski: {number(saved_run.evaluation.total_security_risk)}"
+            )
+            display_plan(loaded, saved_run)
+    with st.expander("Ham kayıtlar, ayarlar ve sınırlar"):
         st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
         st.json(manifest)
         st.download_button(
@@ -1500,18 +1695,61 @@ def experiments_view(data, settings):
         )
 
 
+def open_bundle_in_workspace(loaded, run, manifest, row, settings):
+    """Install only an unscaled snapshot as editable working inputs."""
+    if run.link_rate_factor != 1.0:
+        raise ValueError("scaled conditions must be inspected separately")
+    objective, load = bundle_configuration(manifest)
+    genetic = (
+        GeneticSearchConfig(**manifest["genetic_config"])
+        if "genetic_config" in manifest
+        else settings[2]
+    )
+    swarm = SwarmSearchConfig(**manifest["swarm_config"])
+    if (
+        genetic.population_size > 30
+        or genetic.generations > 30
+        or swarm.particle_count > 24
+        or swarm.iterations > 60
+    ):
+        raise ValueError(
+            "Paketin arama ayarlar\u0131 GUI s\u0131n\u0131r\u0131n\u0131 a\u015f\u0131yor; mevcut CLI ile incelenebilir."
+        )
+    install_dataset(loaded, source="experiment")
+    st.session_state.settings = (
+        objective,
+        load,
+        genetic,
+        swarm,
+        int(row["optimizer_seed"]),
+    )
+    st.session_state.runs = [run]
+    st.session_state.run_context = context_key(loaded, *st.session_state.settings)
+    st.session_state.next_view = VIEWS[2]
+    st.rerun()
+
+
 def main():
     st.set_page_config(
         page_title="Fuzzy Security Lab", page_icon=":material/hub:", layout="wide"
     )
     st.html("""<style>
-    h1 {font-size:1.9rem !important;letter-spacing:0 !important;}
-    h2 {font-size:1.35rem !important;letter-spacing:0 !important;}
-    h3 {font-size:1.1rem !important;letter-spacing:0 !important;}
-    .stMainBlockContainer {max-width:1500px;padding-top:2rem;padding-bottom:3rem;container-type:inline-size;}
-    [data-testid='stMetricValue'] {font-size:1.6rem;}
-    [data-testid='stMetric'] {border-bottom:2px solid #dbe3e4;padding-bottom:0.6rem;}
-    button {border-radius:6px !important;letter-spacing:0 !important;}
+    h1 {font-size:2.1rem !important;letter-spacing:-0.02em !important;color:#173b38 !important;}
+    h2 {font-size:1.4rem !important;letter-spacing:-0.01em !important;color:#176b5a !important;}
+    h3 {font-size:1.12rem !important;letter-spacing:0 !important;color:#31534f !important;}
+    .stApp {background:#eef5f3;}
+    [data-testid='stAppViewContainer'] {background:linear-gradient(135deg,#eef5f3 0%,#f7faf9 52%,#e9f2f0 100%);}
+    [data-testid='stHeader'] {background:rgba(238,245,243,0.9);}
+    .stMainBlockContainer {max-width:1500px;padding-top:4rem;padding-bottom:3rem;container-type:inline-size;background:rgba(255,255,255,0.82);border-left:1px solid #dceae6;border-right:1px solid #dceae6;box-shadow:0 0 28px rgba(42,91,80,0.06);}
+    [data-testid='stMetricValue'] {font-size:1.65rem;color:#176b5a;}
+    [data-testid='stMetric'] {border:1px solid #d6e8e3;border-top:4px solid #2c9b7b;border-radius:10px;background:linear-gradient(135deg,#ffffff,#f2faf7);padding:0.75rem 0.9rem;}
+    [data-testid='stMetricLabel'] {color:#41615c;}
+    [data-testid='stExpander'] {border-color:#cfe2de;border-radius:10px;}
+    [data-testid='stAlert'] {border-radius:10px;}
+    button {border-radius:8px !important;letter-spacing:0 !important;}
+    [data-testid='stSidebar'] {background:linear-gradient(180deg,#eef8f5 0%,#f8fbfa 48%,#ffffff 100%);}
+    [data-testid='stSidebar'] h1,[data-testid='stSidebar'] h2,[data-testid='stSidebar'] h3 {color:#176b5a !important;}
+    [data-testid='stMarkdownContainer'] code {color:#8a4d16;background:#fff4df;padding:0.1rem 0.3rem;border-radius:4px;}
     .st-key-summary_metrics [data-testid='stMetricLabel'] {min-height:2.6em;align-items:flex-start;}
     .st-key-summary_metrics [data-testid='stMetricLabel'] p {white-space:normal;overflow:visible;text-overflow:clip;}
     @container(max-width:760px){
@@ -1522,7 +1760,9 @@ def main():
     @media(max-width:700px){.stMainBlockContainer{padding:4rem 1rem 3rem;}}
     </style>""")
     if "dataset" not in st.session_state:
-        st.session_state.dataset = generate_synthetic_dataset(SyntheticScenarioConfig())
+        st.session_state.dataset = generate_synthetic_dataset(
+            replace(SyntheticScenarioConfig(), experiment=ExperimentConfig(42, 3, 2))
+        )
         st.session_state.settings = (
             ObjectiveConfig(),
             LoadBalanceConfig(),
@@ -1534,6 +1774,7 @@ def main():
         st.session_state.epoch = 0
         st.session_state.edited = False
         st.session_state.input_source = "generated"
+        st.session_state.view = VIEWS[-1]
     if "input_source" not in st.session_state:
         st.session_state.input_source = "generated"
     if "next_view" in st.session_state:
@@ -1608,6 +1849,14 @@ def main():
             )
         )
     )
+    if run.method == "Local":
+        st.info(
+            "G\u00f6sterilen plan **Local**: t\u00fcm g\u00f6revler cihazda \u00e7al\u0131\u015ft\u0131\u011f\u0131 "
+            "i\u00e7in toplam model riski ve sunucu y\u00fck varyans\u0131n\u0131n 0 olmas\u0131 beklenir. "
+            "Di\u011fer planlar\u0131 g\u00f6rmek i\u00e7in **\u00c7\u00f6z\u00fcm Kar\u015f\u0131la\u015ft\u0131rmas\u0131** ekran\u0131nda "
+            "y\u00f6ntemleri \u00e7al\u0131\u015ft\u0131r\u0131n.",
+            icon=":material/info:",
+        )
     st.divider()
     if view == VIEWS[0]:
         overview(data)
@@ -1619,8 +1868,10 @@ def main():
         compare_view(data, settings)
     elif view == VIEWS[4]:
         experiments_view(data, settings)
-    else:
+    elif view == VIEWS[5]:
         mamdani_view(data, run, settings)
+    else:
+        learning_view(data)
     st.divider()
     st.download_button(
         "G\u00f6sterilen plan + girdiler JSON",

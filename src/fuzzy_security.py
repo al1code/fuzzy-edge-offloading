@@ -1,8 +1,6 @@
-"""Fuzzy security assessment from Jin et al., Scientific Reports (2024).
+"""Weighted TFN security assessment, Jin et al. (2024), Eqs. (11)-(15).
 
-The pipeline implements Eqs. (11)-(15). It is weighted triangular-fuzzy-number
-assessment, not a Mamdani/Sugeno rule-based inference system. See
-``references/fuzzy_security.md`` for sources and reproduction decisions.
+Source details: references/fuzzy_security.md.
 """
 
 from __future__ import annotations
@@ -70,9 +68,7 @@ def aggregate_expert_assessments(
 ) -> SecurityPerspectives:
     """Combine L expert assessments component-wise using Eq. (11).
 
-    Weights must align with the assessment order, be non-negative, and sum
-    to one. Empty input and mismatched lengths are rejected. Expert weights
-    are explicit inputs because the paper does not supply their values.
+    Weights follow assessment order, are non-negative, and sum to one.
     """
 
     assessments = tuple(assessments)
@@ -136,11 +132,9 @@ def assess_security(
     security_threshold: float,
     config: FuzzySecurityConfig | None = None,
 ) -> FuzzySecurityResult:
-    """Evaluate one task through Eqs. (11)-(14), preserving each stage.
+    """Evaluate one task through Eqs. (11)-(14), retaining intermediate values.
 
-    Perspective weights default to Table 4's equal eta_k. The security
-    threshold must be supplied explicitly; the paper reports a range, not
-    a single default. This function does not draw random values or alter RNGs.
+    Defaults use Table 4's equal perspective weights and an explicit threshold.
     """
 
     validate_unit_interval(security_threshold, "security_threshold")

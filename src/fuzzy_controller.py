@@ -1,13 +1,6 @@
-﻿"""Uncertainty-aware Type-1 Mamdani offloading policy.
+"""Proposed Type-1 Mamdani policy: security and mean TFN width -> offloading cap.
 
-This is the project's proposed extension, not a claim about the reproduced
-paper.  The policy combines its paper-derived security score with the width of
-the aggregated triangular expert assessments.  It returns an upper cap that
-the lower optimiser must respect.
-
-Inputs use low/medium/high triangular membership functions.  Rules use min
-for AND and max for output aggregation.  Centroid defuzzification produces the
-allowed offloading-ratio cap.  Full traces are retained for the GUI and report.
+Uses min-AND, max aggregation, and centroid defuzzification.
 """
 
 from __future__ import annotations
@@ -37,8 +30,7 @@ OUTPUT_MEMBERSHIP_TRIANGLES: dict[str, tuple[float, float, float]] = {
     "high": (0.60, 1.0, 1.0),
 }
 
-# Rows: security; columns: uncertainty.  This is deliberately conservative:
-# high uncertainty never yields a high offloading cap.
+# Rule keys: (security, assessment width).
 RULE_BASE: dict[tuple[str, str], str] = {
     ("low", "low"): "restricted",
     ("low", "medium"): "restricted",
@@ -111,20 +103,16 @@ def triangular_membership(
 def calculate_aggregate_assessment_uncertainty(
     aggregated_perspectives: SecurityPerspectives,
 ) -> float:
-    """Return mean TFN width for a previously aggregated expert assessment.
+    """Return mean aggregated TFN width in [0, 1].
 
-    This is an assessment-uncertainty indicator, not an attack probability.
-    It is zero for crisp assessments and one only when every perspective has
-    the complete [0, 1] width.
+    Measures assessment width, not attack probability or expert disagreement.
     """
 
     if not isinstance(aggregated_perspectives, SecurityPerspectives):
         raise TypeError("aggregated_perspectives must be a SecurityPerspectives")
     widths = (
-        aggregated_perspectives.task_data.high
-        - aggregated_perspectives.task_data.low,
-        aggregated_perspectives.task_type.high
-        - aggregated_perspectives.task_type.low,
+        aggregated_perspectives.task_data.high - aggregated_perspectives.task_data.low,
+        aggregated_perspectives.task_type.high - aggregated_perspectives.task_type.low,
         aggregated_perspectives.terminal_lifecycle.high
         - aggregated_perspectives.terminal_lifecycle.low,
     )
@@ -160,9 +148,7 @@ def _validate_centroid_resolution(centroid_resolution: int) -> None:
     validate_integer(centroid_resolution, "centroid_resolution", minimum=3)
 
 
-def _centroid(
-    output_strengths: dict[str, float], *, centroid_resolution: int
-) -> float:
+def _centroid(output_strengths: dict[str, float], *, centroid_resolution: int) -> float:
     """Numerically defuzzify a max-aggregated output on a fixed [0, 1] grid."""
 
     _validate_centroid_resolution(centroid_resolution)
@@ -190,15 +176,7 @@ def evaluate_uncertainty_aware_offloading(
     *,
     centroid_resolution: int = 1001,
 ) -> MamdaniOffloadingDecision:
-    """Apply the Type-1 Mamdani policy and return a full decision trace.
-
-    Rule table:
-
-    security / uncertainty | low        | medium      | high
-    low                   | restricted | restricted  | restricted
-    medium                | medium     | low         | restricted
-    high                  | high       | medium      | low
-    """
+    """Apply RULE_BASE and return the cap with memberships and rule activations."""
 
     validate_unit_interval(security_level, "security_level")
     validate_unit_interval(assessment_uncertainty, "assessment_uncertainty")
@@ -211,9 +189,7 @@ def evaluate_uncertainty_aware_offloading(
         assessment_uncertainty, INPUT_MEMBERSHIP_TRIANGLES, UNCERTAINTY_LABELS
     )
     security_degrees = {item.label: item.value for item in security_memberships}
-    uncertainty_degrees = {
-        item.label: item.value for item in uncertainty_memberships
-    }
+    uncertainty_degrees = {item.label: item.value for item in uncertainty_memberships}
     rules = tuple(
         RuleActivation(
             security_label=security_label,
@@ -262,7 +238,9 @@ def derive_task_policy_decisions(
     security_levels = tuple(security_levels)
     assessments_by_task = tuple(tuple(values) for values in assessments_by_task)
     if len(security_levels) != len(assessments_by_task):
-        raise ValueError("security_levels and assessments_by_task must have equal length")
+        raise ValueError(
+            "security_levels and assessments_by_task must have equal length"
+        )
     return tuple(
         evaluate_uncertainty_aware_offloading(
             security_level,

@@ -1,3 +1,8 @@
+import json
+import sys
+from dataclasses import asdict
+
+import numpy as np
 import pytest
 
 from src.models import EdgeServer, Task, TriangularFuzzyNumber
@@ -141,3 +146,45 @@ def test_domain_identifiers_reject_whitespace_only_values() -> None:
         Task(" ", 1.0, 1.0, 1.0)
     with pytest.raises(ValueError, match="server_id"):
         EdgeServer(" ", 1.0, 1.0, 1.0, 1.0)
+
+
+def test_numpy_integer_triangle_does_not_overflow_before_averaging() -> None:
+    value = np.int64(2**62)
+    number = TriangularFuzzyNumber(value, value, value)
+
+    with np.errstate(over="raise"):
+        assert number.centroid() == pytest.approx(float(value))
+        assert number.paper_transformation_value() == pytest.approx(float(value))
+
+
+@pytest.mark.parametrize("value", [1e308, -1e308, sys.float_info.max])
+def test_finite_triangle_averages_remain_finite_at_large_magnitudes(
+    value: float,
+) -> None:
+    number = TriangularFuzzyNumber(value, value, value)
+
+    assert number.centroid() == pytest.approx(value)
+    assert number.paper_transformation_value() == pytest.approx(value)
+
+
+def test_large_mixed_sign_triangle_preserves_weighted_mean() -> None:
+    number = TriangularFuzzyNumber(-1e308, 1e308, 1e308)
+
+    assert number.centroid() == pytest.approx(1e308 / 3)
+    assert number.paper_transformation_value() == pytest.approx(1e308 * (2 / 3))
+
+
+@pytest.mark.parametrize(
+    "model",
+    [
+        TriangularFuzzyNumber(np.float32(0.1), np.float32(0.2), np.float32(0.9)),
+        Task("numpy-task", np.float32(2.5), np.int64(1000000), np.float32(0.8)),
+        EdgeServer("numpy-server", np.int64(10000000), np.float32(25), 50, 2048),
+    ],
+)
+def test_domain_numeric_fields_use_json_compatible_python_floats(model: object) -> None:
+    values = asdict(model)
+    assert all(
+        type(value) is float for value in values.values() if not isinstance(value, str)
+    )
+    assert json.loads(json.dumps(values, allow_nan=False)) == values

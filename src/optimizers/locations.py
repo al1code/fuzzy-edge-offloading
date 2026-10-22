@@ -40,12 +40,8 @@ def evaluate_locations_exact(
 ) -> PlanEvaluation:
     """Optimize endpoint ratios for fixed locations, not locations themselves.
 
-    Compare each task's latency/risk contributions at 0 and its permitted cap.
-    Without ``ratio_caps`` the cap is 1, exactly preserving the baseline.
-    Resources
-    and load depend only on the selected location. Ties choose 0 but keep
-    the server reservation. The common evaluator enforces capacities and
-    calculates the final combined objective. This reference is not SA-PSO.
+    Compare each task at 0 and its cap (1 by default). Reservations and load
+    depend only on locations; ties choose 0 and retain the reservation.
     """
 
     locations = validate_locations(scenario, locations)

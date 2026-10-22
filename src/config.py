@@ -1,9 +1,4 @@
-"""Project configuration objects.
-
-The course project requires reproducible experiments and clearly documented
-parameter choices. This module keeps those choices in one place instead of
-spreading raw constants across the implementation.
-"""
+"""Configuration for scenarios, experiments, and optimizer budgets."""
 
 from __future__ import annotations
 
@@ -57,6 +52,8 @@ class ExperimentConfig:
         validate_integer(self.random_seed, "random_seed")
         validate_integer(self.task_count, "task_count", minimum=1)
         validate_integer(self.server_count, "server_count", minimum=1)
+        for name in ("random_seed", "task_count", "server_count"):
+            object.__setattr__(self, name, int(getattr(self, name)))
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,6 +71,12 @@ class FuzzySecurityConfig:
             self.terminal_lifecycle_weight,
         )
         validate_weights(weights, "security weights")
+        for name in (
+            "task_data_weight",
+            "task_type_weight",
+            "terminal_lifecycle_weight",
+        ):
+            object.__setattr__(self, name, float(getattr(self, name)))
 
 
 @dataclass(frozen=True, slots=True)
@@ -89,15 +92,13 @@ class LoadBalanceConfig:
             (self.cpu_weight, self.bandwidth_weight, self.memory_weight),
             "load balance weights",
         )
+        for name in ("cpu_weight", "bandwidth_weight", "memory_weight"):
+            object.__setattr__(self, name, float(getattr(self, name)))
 
 
 @dataclass(frozen=True, slots=True)
 class GeneticSearchConfig:
-    """Upper-layer GA budget and Table 4 operator bounds.
-
-    Population size, generations, and elitism are project choices. See
-    references/genetic_search.md for the Eq. (35) interpretation and guards.
-    """
+    """GA budget and Table 4 operator bounds; budget and elitism are assumptions."""
 
     population_size: int = 30
     generations: int = 25
@@ -198,11 +199,9 @@ class PositiveRange:
 
 @dataclass(frozen=True, slots=True)
 class SyntheticScenarioConfig:
-    """Recorded numeric-scenario choices, not the recovered author generator.
+    """Synthetic inputs; parameter sources are in references/synthetic_data.md.
 
-    Default counts select the lower Table 4 bounds. Small test counts remain
-    valid. See references/synthetic_data.md for every default's provenance.
-    Equal expert weights and all uniform ranges are project assumptions.
+    Equal expert weights and uniform draws are project assumptions.
     """
 
     experiment: ExperimentConfig = ExperimentConfig(task_count=60, server_count=3)
@@ -232,8 +231,7 @@ class SyntheticScenarioConfig:
         object.__setattr__(self, "expert_weights", tuple(self.expert_weights))
         validate_weights(self.expert_weights, "expert weights")
         validate_unit_interval(self.security_threshold, "security_threshold")
-        # NumPy float32 arithmetic must not change precision after JSON replay.
-        # Validate before conversion so booleans/strings are never coerced.
+        # After validation, use native floats for consistent JSON replay.
         object.__setattr__(
             self, "expert_weights", tuple(float(w) for w in self.expert_weights)
         )

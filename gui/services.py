@@ -32,7 +32,7 @@ from src.optimizers.sapso import solve_boalbfs
 from src.random_utils import create_random_state
 from src.scenario import OffloadingDecision
 from src.synthetic import SyntheticDataset
-from src.validation import validate_non_negative
+from src.validation import validate_non_negative, validate_positive
 
 METHODS = ("Local", "Edge", "BOALBFS", "Analytical", "Exact")
 UNCERTAINTY_MAMDANI_METHOD = "Mamdani / belirsizlik duyarlı"
@@ -50,6 +50,7 @@ class DashboardRun:
     endpoint_tests: int = 0
     infeasible_evaluations: int = 0
     history: tuple[float, ...] = ()
+    link_rate_factor: float = 1.0
 
 
 def mamdani_policy_for_dataset(
@@ -87,9 +88,7 @@ def run_uncertainty_mamdani(
 ) -> DashboardRun:
     """Run BOALBFS under the proposed policy using the current GUI inputs."""
 
-    if (
-        genetic.evaluation_budget * swarm.evaluation_budget > MAX_PLAN_BUDGET
-    ):
+    if genetic.evaluation_budget * swarm.evaluation_budget > MAX_PLAN_BUDGET:
         raise ValueError(f"interactive plan budget exceeds {MAX_PLAN_BUDGET}")
     start = perf_counter()
     result = solve_boalbfs(
@@ -396,7 +395,36 @@ def load_bundle(folder: Path) -> tuple[dict, list[dict]]:
     return manifest, rows
 
 
+def bundle_configuration(manifest: dict) -> tuple[ObjectiveConfig, LoadBalanceConfig]:
+    """Read recorded weights; support only the known equal-weight legacy v1.
+
+    Early uncertainty-aware-mamdani-v1 bundles omitted weights while their
+    runner always used both equal-weight defaults. Other incomplete manifests
+    must not silently inherit current defaults.
+    """
+
+    if (
+        "objective_weights" not in manifest
+        and "load_weights" not in manifest
+        and manifest.get("experiment") == "uncertainty-aware-mamdani-v1"
+    ):
+        return ObjectiveConfig(1 / 3, 1 / 3, 1 / 3), LoadBalanceConfig(
+            1 / 3, 1 / 3, 1 / 3
+        )
+    if "objective_weights" not in manifest or "load_weights" not in manifest:
+        raise ValueError("missing recorded objective/load weights")
+    return ObjectiveConfig(**manifest["objective_weights"]), LoadBalanceConfig(
+        **manifest["load_weights"]
+    )
+
+
 def restore_bundle_run(folder: Path, row: dict, manifest: dict):
+    """Return base inputs and a replay checked under its saved condition.
+
+    A scaled condition is retained on DashboardRun; its base dataset remains
+    unchanged and must not be installed as if it described the scaled links.
+    The dashboard displays such records in a separate read-only inspection.
+    """
     dataset = read_dataset(
         _bundle_file(folder, f"datasets/seed_{int(row['data_seed'])}.json")
     )
@@ -431,14 +459,31 @@ def restore_bundle_run(folder: Path, row: dict, manifest: dict):
             OffloadingDecision(**t["decision"]) for t in record["evaluation"]["tasks"]
         )
         history = tuple(h["best_objective_value"] for h in record["history"])
-    objective = ObjectiveConfig(**manifest["objective_weights"])
-    load = LoadBalanceConfig(**manifest["load_weights"])
+    objective, load = bundle_configuration(manifest)
+    factor = float(row.get("link_rate_factor", 1.0))
+    validate_positive(factor, "link_rate_factor")
+    scenario = dataset.scenario
+    normalization = dataset.normalization
+    if factor != 1.0:
+        from experiments.proposed.uncertainty_mamdani_comparison import scaled_scenario
+
+        scenario = scaled_scenario(scenario, factor)
+        normalization = derive_normalization(scenario)
+    method = row.get("method", row.get("mode"))
+    proposed = (
+        manifest.get("experiment") == "uncertainty-aware-mamdani-v1"
+        and method == "Uncertainty-aware Mamdani"
+    ) or (
+        manifest.get("experiment") == "mamdani-policy-ratios-v1"
+        and str(method).startswith("Mamdani")
+    )
     evaluation = evaluate_plan(
-        dataset.scenario,
+        scenario,
         decisions,
-        normalization=dataset.normalization,
+        normalization=normalization,
         objective_config=objective,
         load_config=load,
+        ratio_caps=mamdani_caps_for_dataset(dataset) if proposed else None,
     )
     for field, actual in {
         "objective": evaluation.objective.value,
@@ -447,11 +492,13 @@ def restore_bundle_run(folder: Path, row: dict, manifest: dict):
         "load_variance": evaluation.objective.load_variance,
         "normalized_latency": evaluation.objective.normalized_latency,
         "normalized_risk": evaluation.objective.normalized_risk,
+        "latency_normalizer": evaluation.normalization.latency_seconds,
+        "risk_normalizer": evaluation.normalization.security_risk,
     }.items():
         if field in row and actual != float(row[field]):
             raise ValueError(f"replayed {field} differs from saved run")
     return dataset, DashboardRun(
-        row.get("method", row.get("mode")),
+        method,
         evaluation,
         float(row["search_seconds"]),
         int(row.get("ga_evaluations") or 0),
@@ -459,11 +506,31 @@ def restore_bundle_run(folder: Path, row: dict, manifest: dict):
         int(row.get("endpoint_tests") or 0),
         int(row.get("infeasible_evaluations") or 0),
         history,
+        factor,
     )
 
 
 def bundle_statistics(rows: list[dict]) -> list[dict]:
     """Reuse the experiment's aggregation, including incomplete-group exclusion."""
+    if not rows:
+        raise ValueError("experiment has no records")
+    if any("link_rate_factor" in row for row in rows):
+        if not all("link_rate_factor" in row for row in rows):
+            raise ValueError("missing link_rate_factor in sensitivity records")
+        factors = sorted({float(row["link_rate_factor"]) for row in rows})
+        records = []
+        for factor in factors:
+            validate_positive(factor, "link_rate_factor")
+            group = [
+                {key: value for key, value in row.items() if key != "link_rate_factor"}
+                for row in rows
+                if float(row["link_rate_factor"]) == factor
+            ]
+            records.extend(
+                {**record, "link_rate_factor": factor}
+                for record in bundle_statistics(group)
+            )
+        return records
     if "method" in rows[0]:
         from experiments.proposed.ratio_comparison import summarize
 

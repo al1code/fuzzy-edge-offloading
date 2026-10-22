@@ -21,23 +21,19 @@ class RandomState:
 
 
 def create_random_state(seed: int = DEFAULT_RANDOM_SEED) -> RandomState:
-    """Create independent deterministic random generators for one experiment."""
+    """Create independent Python and NumPy streams with an explicit PCG64 generator."""
 
     validate_integer(seed, "seed")
     seed = int(seed)
     return RandomState(
         seed=seed,
         python_random=random.Random(seed),
-        numpy_random=np.random.default_rng(seed),
+        numpy_random=np.random.Generator(np.random.PCG64(seed)),
     )
 
 
 def seed_global_generators(seed: int = DEFAULT_RANDOM_SEED) -> None:
-    """Seed legacy globals using an integer in [0, 2**32 - 1].
-
-    Validate both generators' shared seed constraints before changing either
-    state. Prefer ``create_random_state`` for independent experiment streams.
-    """
+    """Validate a shared seed in [0, 2**32 - 1], then seed both legacy globals."""
 
     validate_integer(seed, "seed", maximum=2**32 - 1)
     seed = int(seed)

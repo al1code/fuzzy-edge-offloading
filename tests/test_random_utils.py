@@ -129,3 +129,26 @@ def test_random_helpers_accept_numpy_integer_seeds() -> None:
     seed_global_generators(seed=np.int64(42))
 
     assert state.python_random.random() == random.random()
+
+
+def test_numpy_stream_uses_recorded_pcg64_algorithm() -> None:
+    state = create_random_state(42)
+    expected = np.random.Generator(np.random.PCG64(42))
+
+    assert isinstance(state.numpy_random.bit_generator, np.random.PCG64)
+    np.testing.assert_array_equal(state.numpy_random.random(100), expected.random(100))
+
+
+def test_separate_experiments_do_not_advance_each_others_streams() -> None:
+    first = create_random_state(42)
+    second = create_random_state(42)
+    reference = create_random_state(42)
+    first.python_random.random()
+    first.numpy_random.random(100)
+
+    assert [second.python_random.random() for _ in range(10)] == [
+        reference.python_random.random() for _ in range(10)
+    ]
+    np.testing.assert_array_equal(
+        second.numpy_random.random(10), reference.numpy_random.random(10)
+    )

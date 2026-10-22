@@ -1,4 +1,4 @@
-"""Interactive scientific figures; no calculations replace the src engine."""
+"""Charts for security, offloading plans, and experiment results."""
 
 import altair as alt
 import pandas as pd

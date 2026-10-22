@@ -13,10 +13,18 @@ from src.synthetic import generate_synthetic_dataset
 
 def run_demo(*args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, "-B", "-m", "experiments.baseline.genetic_demo", *args],
+        [
+            sys.executable,
+            "-X",
+            "utf8",
+            "-B",
+            "-m",
+            "experiments.baseline.genetic_demo",
+            *args,
+        ],
         cwd=Path(__file__).resolve().parents[1],
         capture_output=True,
-        text=True,
+        encoding="utf-8",
         check=False,
         timeout=30,
     )

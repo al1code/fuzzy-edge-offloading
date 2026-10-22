@@ -1,13 +1,6 @@
-"""Controlled baseline-versus-uncertainty-aware Mamdani experiments.
+"""Compare baseline BOALBFS with the proposed Mamdani ratio caps.
 
-The reference BOALBFS implementation remains unchanged as the baseline.  The
-proposed policy computes one task-level upper bound for the offloading ratio
-from the paper-derived security score and the spread of the aggregated fuzzy
-assessments.  Both methods receive exactly the same generated data, scenario,
-normalization, GA/SA-PSO budgets, and optimizer seed.
-
-This is an extension experiment, not a claim that the reference paper used a
-Mamdani rule base or reported these numerical results.
+Both methods share inputs, normalization, search budgets, and optimizer seeds.
 """
 
 from __future__ import annotations
@@ -31,6 +24,7 @@ from matplotlib.figure import Figure
 from src.config import (
     ExperimentConfig,
     GeneticSearchConfig,
+    LoadBalanceConfig,
     SwarmSearchConfig,
     SyntheticScenarioConfig,
 )
@@ -43,6 +37,7 @@ from src.fuzzy_controller import (
 )
 from src.fuzzy_security import SecurityPerspectives, aggregate_expert_assessments
 from src.models import TriangularFuzzyNumber
+from src.objective import ObjectiveConfig
 from src.optimizers.sapso import solve_boalbfs
 from src.random_utils import create_random_state
 from src.scenario import OffloadingScenario, WirelessLink
@@ -332,7 +327,6 @@ def _policy_hand_example() -> dict:
         "security_level": 0.7,
         "narrow_triangle": [narrow.low, narrow.modal, narrow.high],
         "wide_triangle": [wide.low, wide.modal, wide.high],
-        # All three perspectives have equal score and spread in this hand case.
         "narrow_uncertainty": calculate_aggregate_assessment_uncertainty(
             narrow_perspectives
         ),
@@ -462,6 +456,8 @@ def run_experiment(
         "scenario_config": asdict(scenario_config),
         "genetic_config": asdict(genetic_config),
         "swarm_config": asdict(swarm_config),
+        "objective_weights": asdict(ObjectiveConfig()),
+        "load_weights": asdict(LoadBalanceConfig()),
         "controller": {
             "type": "Type-1 Mamdani, min-max inference, centroid defuzzification",
             "inputs": ["paper-derived security level", "aggregated-TFN spread"],

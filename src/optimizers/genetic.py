@@ -156,23 +156,13 @@ def search_locations(
     config: GeneticSearchConfig | None = None,
     allow_local: bool = True,
 ) -> GeneticSearchResult:
-    """Search M+1 location genes with a bounded, reproducible upper-layer GA.
+    """Search location genes with elitism and evaluator-supplied ratios.
 
-    The evaluator supplies ratios and must retain the supplied locations
-    in scenario task order. Capacity violations have zero selection weight;
-    other errors propagate. One all-local individual seeds initialization;
-    remaining genes are uniform random. Elitism preserves the best result.
-    No evaluation cache is imposed on a potentially stochastic lower layer.
-    A fresh independent RandomState is needed for replay from the same seed.
-
-    Selection/crossover use f_u=1/F, scaled without changing probabilities.
-    Mutation follows printed Eq. (35)'s f_l=F (Eq. 36), despite its upper-
-    layer context. Its statistics exclude infeasible individuals. These
-    interpretation and initialization choices are explicitly documented.
-    Edge-only comparisons set allow_local=False: genes are then 1..M and
-    initialization includes a round-robin assignment instead of all-local.
-    An infeasible round-robin seed is an initialization failure, not proof
-    that no feasible full-edge plan exists.
+    Capacity violations have zero selection weight; other errors propagate.
+    Selection uses f_u=1/F; mutation follows printed Eq. (35)'s f_l=F.
+    Initialization includes all-local, or round-robin for edge-only mode.
+    Round-robin failure does not prove all edge assignments infeasible.
+    Replay requires a fresh RandomState; see references/genetic_search.md.
     """
 
     if not isinstance(scenario, OffloadingScenario):
@@ -328,7 +318,7 @@ def solve_genetic(
     objective_config: ObjectiveConfig | None = None,
     load_config: LoadBalanceConfig | None = None,
 ) -> GeneticSearchResult:
-    """Stage-7 GA with the affine ratio reference; deliberately not BOALBFS."""
+    """Combine genetic location search with exact fixed-location ratios."""
 
     def evaluator(locations: tuple[int, ...]) -> PlanEvaluation:
         return evaluate_locations_exact(

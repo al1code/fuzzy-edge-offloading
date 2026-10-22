@@ -1,4 +1,4 @@
-﻿import pytest
+import pytest
 
 from src.fuzzy_controller import (
     RULE_BASE,
@@ -48,8 +48,7 @@ def test_high_security_low_uncertainty_allows_more_offloading() -> None:
 
 def test_low_security_is_restricted_at_every_uncertainty_level() -> None:
     caps = [
-        evaluate_uncertainty_aware_offloading(0.1, uncertainty)
-        .allowed_offloading_ratio
+        evaluate_uncertainty_aware_offloading(0.1, uncertainty).allowed_offloading_ratio
         for uncertainty in (0.1, 0.5, 0.9)
     ]
 
@@ -59,8 +58,9 @@ def test_low_security_is_restricted_at_every_uncertainty_level() -> None:
 def test_cap_stays_bounded_on_input_grid() -> None:
     values = [i / 10 for i in range(11)]
     caps = [
-        evaluate_uncertainty_aware_offloading(security, uncertainty)
-        .allowed_offloading_ratio
+        evaluate_uncertainty_aware_offloading(
+            security, uncertainty
+        ).allowed_offloading_ratio
         for security in values
         for uncertainty in values
     ]
@@ -107,9 +107,7 @@ def test_trace_shows_the_expected_corner_rule() -> None:
 def test_ratio_caps_are_derived_without_dataset_coupling() -> None:
     first = _perspectives()
     caps = derive_task_ratio_caps((0.9, 0.1), ((first,), (first,)), (1.0,))
-    decisions = derive_task_policy_decisions(
-        (0.9, 0.1), ((first,), (first,)), (1.0,)
-    )
+    decisions = derive_task_policy_decisions((0.9, 0.1), ((first,), (first,)), (1.0,))
 
     assert len(caps) == 2
     assert caps == pytest.approx(
@@ -138,5 +136,7 @@ def test_controller_rejects_invalid_inputs(value: float) -> None:
 def test_controller_rejects_invalid_centroid_resolution(resolution: object) -> None:
     with pytest.raises((TypeError, ValueError), match="centroid_resolution"):
         evaluate_uncertainty_aware_offloading(
-            0.5, 0.5, centroid_resolution=resolution  # type: ignore[arg-type]
+            0.5,
+            0.5,
+            centroid_resolution=resolution,  # type: ignore[arg-type]
         )

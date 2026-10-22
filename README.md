@@ -1,5 +1,21 @@
 # Fuzzy Security-Aware Task Offloading for Multi-Server Edge Computing
 
+Projeye ilk kez bakıyorsan **[Türkçe başlangıç rehberini](references/buradan_basla.md)**
+oku. GUI artık 3 görev / 2 sunucu ile **Projeyi Anla** ekranında başlar;
+çekirdek deney varsayılanları değişmemiştir. Yöntemin, katkının ve ayarların
+etkisi hesaplanan örneklerle gösterilir.
+
+**23 Ekim 2026:** GUI dahil **778 test geçti**. Seçilen kod kapsamı
+dondurulabilir; sıradaki işler rapor, sunum ve demo provasıdır.
+[Girilecek değerler, doğrulanmış sonuçlar ve 17 dakikalık sunum akışı](references/sunum_demo_akisi.md).
+
+**22 Ekim 2026 incelemesi:** [Düzeltilen hatalar, gerçek deneyler ve katkının
+sınırları](references/inceleme_2026_10_22.md). Katkı, görev bazlı Mamdani
+oran sınırıdır. Bu politika farklı güvenlik/gecikme tercihleri üretir;
+genel performans üstünlüğü veya gerçek güvenlik kazanımı kanıtlanmış değildir.
+Tam teslim uygunluğu, rapor/sunum/literatür ve projeye özel MRR ile birlikte
+değerlendirilmelidir.
+
 ## Project Information
 
 This repository contains the reproduction and extension study conducted for the Fuzzy Logic course project.
