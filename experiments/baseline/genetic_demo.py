@@ -198,9 +198,7 @@ def main() -> None:
                 },
                 "history": [asdict(generation) for generation in result.history],
                 "exact_comparison": comparison,
-                "search_notes": "references/boalbfs.md"
-                if integrated is not None
-                else "references/genetic_search.md",
+                "search_notes": "references/README.md#boalbfs",
             },
             indent=2,
             allow_nan=False,

@@ -162,7 +162,7 @@ def search_locations(
     Selection uses f_u=1/F; mutation follows printed Eq. (35)'s f_l=F.
     Initialization includes all-local, or round-robin for edge-only mode.
     Round-robin failure does not prove all edge assignments infeasible.
-    Replay requires a fresh RandomState; see references/genetic_search.md.
+    Replay requires a fresh RandomState; see references/README.md.
     """
 
     if not isinstance(scenario, OffloadingScenario):

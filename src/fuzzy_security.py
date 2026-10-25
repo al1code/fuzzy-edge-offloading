@@ -1,6 +1,6 @@
 """Weighted TFN security assessment, Jin et al. (2024), Eqs. (11)-(15).
 
-Source details: references/fuzzy_security.md.
+Source details: references/README.md, fuzzy security equations.
 """
 
 from __future__ import annotations

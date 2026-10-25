@@ -1,138 +1,53 @@
-# Fuzzy Security-Aware Task Offloading for Multi-Server Edge Computing
+# Bulanık Güvenlik ile Görev Aktarma
 
-Projeye ilk kez bakıyorsan **[Türkçe başlangıç rehberini](references/buradan_basla.md)**
-oku. GUI artık 3 görev / 2 sunucu ile **Projeyi Anla** ekranında başlar;
-çekirdek deney varsayılanları değişmemiştir. Yöntemin, katkının ve ayarların
-etkisi hesaplanan örneklerle gösterilir.
+Endüstriyel kenar bilişimde bir hesaplama görevinin **hangi sunucuda** ve
+**ne kadarının uzakta** işleneceğini seçen Python simülasyonu. Görev süresi,
+bulanık güvenlikten türetilen model riski ve sunucu yük dengesi birlikte değerlendirilir.
 
-**23 Ekim 2026:** GUI dahil **778 test geçti**. Seçilen kod kapsamı
-dondurulabilir; sıradaki işler rapor, sunum ve demo provasıdır.
-[Girilecek değerler, doğrulanmış sonuçlar ve 17 dakikalık sunum akışı](references/sunum_demo_akisi.md).
+**Ali Kemal Dilek · 1306230043**<br>
+İstanbul Üniversitesi-Cerrahpaşa · Bilgisayar Mühendisliği · Bulanık Mantık
 
-**22 Ekim 2026 incelemesi:** [Düzeltilen hatalar, gerçek deneyler ve katkının
-sınırları](references/inceleme_2026_10_22.md). Katkı, görev bazlı Mamdani
-oran sınırıdır. Bu politika farklı güvenlik/gecikme tercihleri üretir;
-genel performans üstünlüğü veya gerçek güvenlik kazanımı kanıtlanmış değildir.
-Tam teslim uygunluğu, rapor/sunum/literatür ve projeye özel MRR ile birlikte
-değerlendirilmelidir.
+## Rapor ve sunum
 
-## Project Information
+- [Teknik proje raporu](report/Bulanik_Mantik_Proje_Raporu.pdf)
+- [PowerPoint sunumu — 18 slayt](presentation/Bulanik_Mantik_Proje_Sunumu.pptx)
 
-This repository contains the reproduction and extension study conducted for the Fuzzy Logic course project.
+Sunum, proje sonuçlarını ve kullanım akışını içerir.
 
-**Student:** Ali Kemal Dilek  
-**Department:** Computer Engineering  
-**University:** Istanbul University-Cerrahpaşa  
+## Yöntem ve katkılar
 
-## Original Paper
+Temel kaynak: X. Jin, S. Zhang, Y. Ding ve Z. Wang,
+“Task offloading for multi-server edge computing in industrial Internet with
+joint load balance and fuzzy security,” *Scientific Reports*, 2024.
+[Makale ve denklemler](https://www.nature.com/articles/s41598-024-79464-2).
 
-X. Jin, S. Zhang, Y. Ding, Z. Wang et al.,  
-"Task offloading for multi-server edge computing in industrial Internet with joint load balance and fuzzy security,"  
-Scientific Reports, 2024.
+1. **Bulanık güvenlik:** uzmanların üçgen değerlendirmeleri ağırlıklandırılır;
+   güvenlik puanı ve gönderim riski hesaplanır.
+2. **Ortak değerlendirme:** cihaz, iletim ve sunucu süreleri; kaynak kapasitesi;
+   yük varyansı ve normalize toplam maliyet `F` hesaplanır.
+3. **BOALBFS:** adaptif genetik algoritma (GA) sunucu/yerel konumunu, SA-PSO
+   gönderim oranını arar. En iyi gözlenen uygun plan korunur.
+4. **Mamdani katkısı:** güvenlik puanı `S` ve değerlendirme üçgenlerinin ortalama
+   genişliği `U`, dokuz kuralla görev başına izinli üst gönderim oranına dönüştürülür.
+5. **Analitik oran çalışması:** sunucu seçimleri sabitken modelin doğrusal yapısı
+   kullanılarak oran aramasının hesaplama maliyeti azaltılır.
 
-[Article and equations](https://www.nature.com/articles/s41598-024-79464-2)
+Mamdani denetleyicisi projeye eklenen ayrı bir katmandır; makalenin özgün bulanık
+güvenlik hesabıyla karıştırılmamalıdır.
 
-## Project Objective
+Bulanık mimari: uzman üçgenleri → ağırlıklı güvenlik puanı `S` ve ortalama
+genişlik `U` → düşük/orta/yüksek üyelikler → dokuz Mamdani kuralı → min/max
+çıkarım → centroid ile üst gönderim oranı → aynı GA/SA-PSO araması.
+[Denklem eşlemesi ve yöntem ayrıntıları](references/README.md).
 
-The objective of this project is to reproduce the core components of the task-offloading method proposed in the reference paper, with particular emphasis on fuzzy security assessment, multi-server load balancing, and partial task offloading.
+Gerçekleştirme kapsamı, makalenin çekirdek bulanık güvenlik, süre/yük ve
+BOALBFS yöntemini uygulamak ve temel mod deneyini sınamaktır. Bütün makale
+şekillerini ve rakip algoritmaları yeniden uygulama iddiası yoktur.
 
-The reproduced baseline is accompanied by one cost-reduction study: replace
-SA-PSO ratio search with the model's analytical endpoint calculation. A fixed-
-location experiment isolates the change; a full GA comparison measures its
-effect on the complete decision process.
+## Kurulum ve çalıştırma
 
-For an accessible walkthrough in Turkish, start with
-[Bu projede ne yapiyoruz?](references/adim_adim_rehber.md).
-The [11-stage roadmap](references/roadmap.md) records the current stage,
-completion criteria, and the distinction between a working baseline and delivery.
-The detailed article-to-code alignment and the limits of quantitative
-reproduction are documented in
-[Makale uyumu ve onerilen gelistirme](references/paper_alignment.md).
-
-## Implemented Components
-
-- Synthetic industrial task generation
-- Fuzzy security assessment
-- Local computation model
-- Edge computation model
-- Communication model
-- Multi-server load calculation
-- Load variance calculation
-- Multi-objective fitness function
-- Adaptive Genetic Algorithm
-- SA-PSO optimization
-- BOALBFS integration
-- Baseline reproduction experiments
-- Proposed extensions: analytical ratio cost study and uncertainty-aware
-  Mamdani offloading controller
-- Comparative experimental evaluation
-- Turkish interactive dashboard and saved-experiment inspection
-
-## Dataset
-
-The reference study uses synthetically generated experimental data.
-
-A request for the experimental dataset, generation procedure, parameter settings, random seeds, and implementation details has been sent to the corresponding author.
-
-The project will proceed without depending on an author response. Its primary
-experiments will use seeded synthetic scenarios based on the reported parameter
-information, with all unspecified choices documented. This reproduces the
-method under recorded assumptions, not the authors' exact experimental inputs.
-
-The paper's original main dataset is not available to this project. The course
-instructor approved using generated data for this situation. Therefore the
-synthetic dataset is an intentional and documented experimental choice, not a
-claim that the author's hidden data was recovered. Every recorded scenario
-stores its seed, generated inputs, configuration, software versions and
-checksums so the project results remain reproducible.
-
-Any assumptions that are not explicitly specified in the paper will be documented separately.
-
-Real workload traces may support a separate robustness experiment after the
-baseline is working. They are not replacements for the original fuzzy expert
-assessments or wireless conditions. See [the dataset strategy](references/dataset_strategy.md).
-
-## Environment
-
-- Python 3.14.5
-
-## Installation
-
-Create and activate a virtual environment:
-
-```powershell
-py -3.14 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements-dev.txt
-```
-
-To recreate the recorded development environment, install the pinned versions
-instead of the unpinned development requirements:
-
-```powershell
-python -m pip install -r requirements-lock.txt
-```
-
-## Interactive Dashboard
-
-### Kendi Bilgisayarinda Acma (Windows)
-
-PowerShell'de proje klasorune gir. GUI bagimliliklari daha once kurulduysa
-yalnizca su komutlar yeterlidir; sanal ortami etkinlestirmek gerekmez:
-
-```powershell
-cd "C:\Users\alike\OneDrive\Masaüstü\fuzzy-security-task-offloading"
-.\.venv\Scripts\python.exe -m streamlit run app.py
-```
-
-Tarayicida [GUI'yi ac](http://127.0.0.1:8501). Terminali sunum boyunca acik tut;
-durdurmak icin `Ctrl+C` kullan. Port doluysa son komuta `--server.port 8502`
-ekle ve `http://127.0.0.1:8502` adresini ac.
-
-### Baska Bilgisayarda Ilk Kurulum (Windows)
-
-Kayitli ortam Python **3.14.5 / Windows** ile dogrulandi. Python 3.14 ve Git
-kurulu bir bilgisayarda:
+Kaydedilmiş geliştirme ortamı **Windows / Python 3.14.5** kullanır.
+PowerShell'de:
 
 ```powershell
 git clone https://github.com/al1code/fuzzy-security-task-offloading.git
@@ -142,391 +57,179 @@ py -3.14 -m venv .venv
 .\.venv\Scripts\python.exe -m streamlit run app.py
 ```
 
-Git yerine GitHub'dan ZIP indirip acmak da mumkundur; `app.py` ve
-`requirements-gui.txt` bulunan klasorde son uc komutu uygula. `.venv`
-klasorunu baska bilgisayardan kopyalama. Ilk bagimlilik kurulumu internet
-gerektirir; kurulumdan sonra temel GUI demosu yerel olarak calisir.
-GUI dosyalarinin paylasilan depo surumunde bulunmasi gerekir.
+[Uygulamayı aç](http://127.0.0.1:8501). Terminal açık kalmalıdır; durdurmak için
+`Ctrl+C` kullanılır. Port doluysa son komuta `--server.port 8502` eklenebilir.
+GitHub'dan ZIP indirildiyse `app.py` bulunan klasörde sanal ortam adımından başlanır.
+`.venv/` başka bilgisayara kopyalanmaz.
 
-### Kisa Kullanim
+Bağımlılık dosyaları:
 
-1. Solda **Gorev: 3**, **Sunucu: 2**, **Veri seed: 42**, **Guvenlik esigi: 0.60**
-   sec ve **Senaryoyu olustur** dugmesine bas.
-2. **Bulanik Guvenlik** ekraninda uzman goruslerinden guvenlik puani ve model
-   riskinin nasil olustugunu incele.
-3. **Gorev ve Sunucular** ekraninda `task-0001` / `edge-001` icin gonderim
-   oranini 0, 50, 100 yap; cihaz, iletim ve sunucu surelerini karsilastir.
-   Bu surgu yalnizca tek gorevi inceler, tam plani degistirmez.
-4. **Cozum Karsilastirmasi** ekraninda yontemleri secip **Secili cozumleri
-   calistir** dugmesine bas. Daha dusuk `F` tercih edilir; basari yuzdesi degildir.
-5. **Deney Kayitlari** ekraninda kayitli deneyleri incele. `results/` Git'te
-   tutulmadigi icin yeni bilgisayarda kayit olmamasi normaldir.
+| Dosya | Kapsam |
+| --- | --- |
+| `requirements.txt` | Sayısal çekirdek ve komut satırı deneyleri |
+| `requirements-gui.txt` | Sabit çekirdek sürümleri ve sabit Streamlit bağımlılıkları |
+| `requirements-dev.txt` | Çekirdek, test ve kod denetimi araçları |
+| `requirements-lock.txt` | Çekirdek ve test ortamının sabit sürümleri |
 
-Arayuzde bu etiketler Turkce karakterlerle gosterilir. Veriler sentetiktir;
-model riski gercek saldiri olasiligi degildir. GUI gercek cihazlara is gondermez.
-Kurulum sorunlari, degerlerin anlami, ornek sonuclar ve canli sunum hazirligi
-icin [Turkce GUI/demo rehberine](references/gui.md) bak.
-GUI mevcut cekirdegi kullanir; yeni bir optimizasyon motoru eklemez.
-Komut satiri deneyleri istege bagli GUI kurulmadan da calisir.
+### İlk kullanım
 
-## Repository Structure
+1. **3 görev, 2 sunucu, veri seed 42, güvenlik eşiği 0,60** ile senaryo oluştur.
+2. **Projeyi Anla** ekranından modelin girdilerini ve örnek hesabı incele.
+3. **Bulanık Güvenlik** ekranında uzman üçgenlerinden güvenlik puanına geçişi gör.
+4. **Çözüm Karşılaştırması** ekranında Local, BOALBFS ve Mamdani yöntemlerini çalıştır.
+5. **Mamdani Katkısı** ekranında `S` ve `U` için izin verilen oranı incele.
+
+Mamdani sürgüleri kural önizlemesidir; görev girdilerini değiştirmez.
+Daha küçük `F`, aynı girdiler ve ağırlıklar altında daha düşük toplam maliyettir.
+
+## Veri ve tekrar üretilebilirlik
+
+Özgün yazar girdileri ve kaynak kodu bu projede bulunmuyor. Deneylerde makalede
+bildirilen aralıklar ve açık proje varsayımlarıyla üretilmiş **sentetik veriler**
+kullanılıyor. Parametrelerin kaynağı ve birimleri
+[veri belgesinde](references/synthetic_data.md), kodda ve raporda açıklanır.
+
+Üretilmiş görev verileri depoya eklenmez; `synthetic_demo` komutuyla
+yerelde yeniden oluşturulur. Örnek ayar: 60 görev, 3 sunucu, seed 42.
+Yerel kayıtlar gerçek girdileri, yapılandırmayı, tohumları, yazılım sürümlerini
+ve dosya karmalarını içerir. Aynı tohum tek başına farklı kütüphane sürümlerinde
+özdeş sonuç garantisi değildir. Arama süreleri donanıma ve sistem yüküne bağlıdır.
+
+Rapor ve sunumdaki sonuçlar [Türkçe karşılaştırma tabloları](results/tables/README.md)
+ve [PNG grafikler](results/figures/README.md) olarak paylaşılır. Bunların dayandığı
+**225 koşuluk sayısal ölçümler**, yaklaşık 28 KB'lık
+[CSV dosyasındadır](results/tables/recorded_runs.csv).
+Tekrarlanan görev JSON'ları, tam planlar, ham deney paketleri ve SVG dosyaları
+Git dışında tutulur; tohumlar ve deney ayarları belgelerde korunur.
+Yeni klonda Deney Kayıtları ekranının boş olması normaldir. Küçük örnek
+doğrudan çalışır; tam deney komutları kayıt paketlerini yeniden oluşturur. Mevcut çıktı
+klasörü üzerine yazılmaz; tekrar çalıştırırken yeni bir klasör adı seçilir.
+
+## Komut satırı örnekleri
+
+Aşağıdaki komutlar depo kökünde çalıştırılır:
+
+```powershell
+# Bulanık güvenlik hesabı ve ara değerler
+.\.venv\Scripts\python.exe -m experiments.baseline.fuzzy_security_demo
+
+# Yerel, kısmi ve tam gönderimin süreleri
+.\.venv\Scripts\python.exe -m experiments.baseline.offloading_demo
+
+# Sentetik girdileri yerelde üret ve kaydet
+.\.venv\Scripts\python.exe -m experiments.baseline.synthetic_demo --seed 42 --output data/generated/synthetic_seed42.json
+
+# Kaydedilen aynı girdileri yeniden oku
+.\.venv\Scripts\python.exe -m experiments.baseline.synthetic_demo --input data/generated/synthetic_seed42.json
+
+# Küçük örnekte BOALBFS ile kesin referansı karşılaştır
+.\.venv\Scripts\python.exe -m experiments.baseline.genetic_demo --method boalbfs --tasks 3 --servers 2 --verify-exact
+```
+
+## Rapor ve sunumdaki deneyleri çalıştırma
+
+```powershell
+# A: Local / Edge / Local-Edge — 5 veri, 3 arama tekrarı
+.\.venv\Scripts\python.exe -m experiments.baseline.mode_comparison --output results/reproduction_modes
+
+# B: Mamdani ve temel yöntem — 5 veri, 2 tekrar, 3 bağlantı hızı
+.\.venv\Scripts\python.exe -m experiments.proposed.uncertainty_mamdani_comparison --output results/reproduction_mamdani --tasks 60 --servers 3 --data-seeds 7 21 42 84 2026 --optimizer-seeds 0 1 --population 6 --generations 3 --particles 4 --pso-iterations 5 --link-rate-factors 0.5 1 2
+
+# C: Aynı konumlarda ek sınır yok / sabit sınır / yalnız S / tam S-U kontrolü
+.\.venv\Scripts\python.exe -m experiments.proposed.contribution_audit --output results/reproduction_policy_controls
+
+# D: Sabit konumlarda SA-PSO ve analitik oran hesabı
+.\.venv\Scripts\python.exe -m experiments.proposed.ratio_comparison --output results/reproduction_ratios
+
+# E: Tam GA akışında SA-PSO ve analitik oran hesabı
+.\.venv\Scripts\python.exe -m experiments.proposed.ratio_comparison --scope pipeline --output results/reproduction_pipelines
+```
+
+Deneyler uzun sürebilir; hızlı kontrol için küçük senaryo kullanılmalıdır.
+
+Depodaki ham kayıtlardan özet tabloları ve grafikleri yeniden oluşturmak için:
+
+```powershell
+.\.venv\Scripts\python.exe -m experiments.summarize_results
+```
+
+Bu komut saklanan planları yeniden optimize etmez; kayıtlı ölçümleri özetler.
+Deney paketleri, koşulları ve raporla eşlemesi [sonuç dizininde](results/README.md) açıklanır.
+
+### Kaydedilmiş sonuçların özeti
+
+| Karşılaştırma | Gözlenen sonuç | Yorum sınırı |
+| --- | --- | --- |
+| Local-Edge / Local | Ortalama eşleştirilmiş `F` kazancı yaklaşık %0,47 | Makaledeki %46 sonucunun tekrarı değildir |
+| Mamdani / BOALBFS, 2 kat bağlantı hızı | Ortalama model riski %13,05 azaldı; süre %0,104 ve `F` %0,110 arttı | 0,5 ve 1 kat hızda bu arama bütçesiyle fark oluşmadı |
+| Sabit sınır / tam Mamdani | Sabit sınır da risk azalması sağladı | Mamdani bütün ölçütlerde üstün değil |
+| GA + analitik / GA + SA-PSO | Ortalama plan arama süresi yaklaşık 51,68 kat kısaldı | Aynı üst GA bütçesi; görev süresi değildir; ortalama model riski arttı |
+
+Bu değerler rapordaki kayıtlı sentetik deneylerin özetidir; yeni çalıştırmanın
+özellikle zaman ölçümü farklı olabilir. Bağımsız veri sayısı beştir;
+aynı verideki arama tekrarları yeni veri örnekleri sayılmaz.
+
+![Temel kullanım modlarının karşılaştırması](results/figures/baseline_modes.png)
+
+![Mamdani risk ve süre tercihi](results/figures/mamdani_tradeoff.png)
+
+## Test ve kod denetimi
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -p no:cacheprovider tests -q
+.\.venv\Scripts\python.exe -m ruff check --no-cache src tests experiments gui app.py
+.\.venv\Scripts\python.exe -m ruff format --check --no-cache src tests experiments gui app.py
+git diff --check
+```
+
+Testler elle hesaplanan örnekleri, geçersiz girdileri, kapasite sınırlarını,
+Mamdani kurallarını, küçük kesin çözümleri, kayıt tekrar hesabını ve arayüz
+etkileşimlerini kapsar. Test sonuçları gerçek fabrika deneyi yerine geçmez.
+
+## Kapsam ve sınırlılıklar
+
+- Uygulama bir simülasyondur; gerçek cihazlara görev göndermez.
+- Model riski ölçülmüş saldırı olasılığı değildir. `U`, üçgenlerin genişliğidir;
+  uzmanlar arası anlaşmazlığın doğrudan ölçüsü değildir.
+- Makaledeki çekirdek yöntem yeniden uygulanmıştır; bütün rakip algoritmalar,
+  deney şekilleri ve yayımlanmış yüzdeler tekrarlanmamıştır.
+- Pozitif toplam risk ve eşit amaç ağırlıklarında kullanılan normalizasyon,
+  tam kenar planının yerelden daha düşük `F` almasını engeller. Sonuç farkının
+  tek nedeni özgün verilerin bulunmaması değildir.
+- Kuyruk, enerji, şifreleme maliyeti ve paralel tamamlanma zamanı modelde yoktur.
+  Süre, görevlerin cihaz/iletim/sunucu sürelerinin toplamıdır.
+- GA ve SA-PSO global optimum garantisi vermez. Analitik oran çözümünün
+  kesinliği yalnız sabit konum, kaynak ve normalizasyon koşullarındaki alt probleme aittir.
+- Mamdani kuralları gerçek saldırı verisiyle kalibre edilmemiştir; bütün
+  ara noktalarda monotonluk veya her koşulda performans üstünlüğü iddia edilmez.
+
+## Depo düzeni
 
 ```text
-src/                    Core implementation
-src/optimizers/         Optimization algorithms
-app.py                  Local Streamlit entry point
-gui/                    Dashboard views, figures and core adapters
-data/generated/         Reproducibly generated synthetic datasets
-data/author_provided/   Author-provided data, if permission allows local use
-experiments/baseline/   Reference-method experiments
-experiments/proposed/   Proposed-extension experiments
-tests/                  Automated tests
-results/figures/        Generated figures
-results/tables/         Experimental result tables
-references/             Reference and parameter documentation
-report/                 Technical report
-presentation/           Final presentation
+app.py                  Streamlit başlangıcı
+gui/                    Arayüz ve çekirdeğe bağlanan servisler
+src/                    Model, hesaplama, veri ve doğrulama
+src/optimizers/         GA, SA-PSO ve kesin/analitik kontroller
+experiments/baseline/   Temel yöntem deneyleri ve küçük örnekler
+experiments/proposed/   Mamdani ve analitik oran deneyleri
+experiments/summarize_results.py  Kaydedilmiş sonuçlardan tablo/grafik üretimi
+tests/                  Birim ve bütünleştirme testleri
+data/generated/         Yerelde üretilen girdiler; Git dışında
+data/author_provided/   Varsa yerel yazar verisi; Git dışında
+results/                Paylaşılan deney kayıtları ve sonuç dizini
+results/figures/        Açıklamalı grafik galerisi; PNG görseller
+results/tables/         Doğrudan okunabilen Türkçe tablolar ve CSV indirmeleri
+results/archive/        Yerel ham deney kayıtları; Git dışında
+references/             Kaynakça, yöntem ve veri varsayımları
+report/                 Son teknik rapor
+presentation/           Son PowerPoint sunumu
 ```
 
-## Current Implementation
+## Kaynaklar ve yapay zekâ kullanımı
 
-The configuration, domain models, random-number utilities, numerical fuzzy
-security subsystem, latency/load calculations, common multi-task evaluator,
-normalized objective, seeded synthetic scenario generator, and bounded
-small-instance exact verification solver, adaptive genetic location search,
-and SA-PSO ratio search are implemented. Stage 8 of the
-[roadmap](references/roadmap.md) is complete: the two layers run together under
-recorded assumptions. The affine ratio reference remains a separate verification
-mode. The selected stage-9 mode experiment has 45 recorded runs under project
-assumptions. Stage 10 includes 30 fixed-location records and a separate
-30-record full-pipeline comparison. The GUI now exposes these existing models
-and experiments; the report, presentation and final delivery checks remain;
-quantitative reproduction of the original paper is not established.
-The GUI is the final planned coding step, not a replacement for the report or
-instructor-specific MRR confirmation.
+[Kaynakça ve teknik eşleme](references/README.md) ile raporun kaynakça bölümü
+ilgili kaynakları içerir. Yazarın kaynak kodu kullanılmamıştır.
+ChatGPT ve Codex; kod, açıklama, inceleme ve dokümantasyon desteğinde kullanılmıştır.
+Bu kullanım raporda açıklanır.
 
-The fuzzy subsystem accepts one triangular assessment per expert for each of
-three perspectives: task data, task type, and terminal lifecycle. It combines
-expert opinions, transforms each perspective into a crisp score, combines the
-perspectives, and calculates security and offloading risks using Eqs. (11)-(15).
-
-The result retains the aggregated triangles and perspective scores so each
-calculation can be explained. This is the reference paper's weighted assessment
-method; it does not introduce a separate Mamdani/Sugeno rule base.
-
-The proposed uncertainty-aware Mamdani controller is a separate decision layer,
-not a replacement claim for the paper's fuzzy-security equations. It aggregates
-the expert triangles, measures their mean triangular width as an assessment
-uncertainty indicator, and uses a documented conservative 3x3 Type-1 Mamdani
-rule base to produce a per-task offloading-ratio cap. The baseline and proposed
-pipeline use the same generated dataset, normalization, GA/SA-PSO budgets, and
-optimizer seeds. The controlled CLI experiment is
-[`uncertainty_mamdani_comparison.py`](experiments/proposed/uncertainty_mamdani_comparison.py);
-its manifest records inputs, source checksums, assumptions, and outputs. The
-cap limits the proposed optimizer only; `uncertainty_weighted_exposure` is a
-diagnostic sensitivity metric, not an attack probability or a paper metric.
-
-The article's reported experiments are broader than the currently recorded
-baseline bundle: they also vary task/server counts, wireless rate, load
-balancing, objective weights, iterations, and compare five additional
-optimizers. The current repository reproduces the core BOALBFS chain under
-documented assumptions and adds the Mamdani policy; it does not claim those
-unimplemented competitor algorithms or the authors' exact percentages.
-See the [alignment note](references/paper_alignment.md) before interpreting
-any project result as a paper result.
-
-See [the fuzzy equation mapping](references/fuzzy_security.md),
-[the simulation model and unit assumptions](references/simulation.md),
-[the common evaluation walkthrough](references/evaluation.md),
-[synthetic data parameters and replay](references/synthetic_data.md),
-[small-instance exact verification](references/exact_search.md),
-[adaptive genetic location search](references/genetic_search.md),
-[two-layer GA/SA-PSO search and its assumptions](references/boalbfs.md), and
-[the working reproduction scope and experiment plan](references/reproduction_plan.md).
-
-## How to Run
-
-From the repository root with the virtual environment activated:
-
-```powershell
-python -B -m experiments.baseline.fuzzy_security_demo
-```
-
-This deterministic, synthetic worked example prints its inputs, intermediate
-values, security level, and risks as JSON. Its default security level is
-`0.47125`, security risk is approximately `0.120806`, and offloading risk is
-approximately `0.048323`. These are example calculations, not reproduced
-experimental results from the paper.
-
-Evaluate local, partial, and full offloading with the connected fuzzy, latency,
-and load calculators:
-
-```powershell
-python -B -m experiments.baseline.offloading_demo
-```
-
-The supplied ratios `0`, `0.4`, and `1` take `1.20`, `0.92`, and `0.50` seconds
-in this illustrative scenario. The demo evaluates those decisions; it does not
-optimize them. To see why a slower link can make offloading unfavorable:
-
-```powershell
-python -B -m experiments.baseline.offloading_demo --link-rate-mbps 4 --ratios 0 1
-```
-
-Change the threshold or offloading ratio to inspect their effects:
-
-```powershell
-python -B -m experiments.baseline.fuzzy_security_demo --security-threshold 0.4 --offloading-ratio 0.0
-```
-
-Run the tests and code-quality checks:
-
-```powershell
-python -B -m pytest -p no:cacheprovider
-python -B -m ruff check --no-cache src tests experiments
-python -B -m ruff format --check --no-cache src tests experiments
-```
-
-Generate a 60-task, 3-server synthetic scenario and inspect supplied plans:
-
-```powershell
-python -B -m experiments.baseline.synthetic_demo
-```
-
-This prints a compact summary without writing a file or optimizing decisions.
-The repository includes one saved seed-42 snapshot. Replay those exact inputs:
-
-```powershell
-python -B -m experiments.baseline.synthetic_demo --input data/generated/synthetic_v1_seed42_n60_m3.json
-```
-
-Record a different scenario for later comparisons:
-
-```powershell
-python -B -m experiments.baseline.synthetic_demo --seed 7 --output data/generated/synthetic_v1_seed7_n60_m3.json
-```
-
-Snapshots retain raw expert ratings, channel gains, inputs, fixed scales,
-configuration, runtime versions, and a checksum. Existing files are never
-overwritten. Parameter defaults and undocumented-paper choices are listed in
-[the synthetic-data notes](references/synthetic_data.md).
-
-## Reproduction Experiments
-
-Run a complete small-instance search (3 tasks, 2 servers, 125 candidates):
-
-```powershell
-python -B -m experiments.baseline.exact_demo
-```
-
-This finds an optimum of the current affine model and retains the complete
-latency/risk/load breakdown. It is a verification oracle, not BOALBFS or a
-published-experiment result. Selected-server decisions at ratio zero remain
-in the search because they still reserve resources. The default 100000-candidate
-budget rejects paper-sized exhaustive searches instead of truncating them.
-See [the proof, assumptions, and tests](references/exact_search.md).
-
-The first selected experiment compares execution modes under documented project
-assumptions; it does not recover the authors' exact experiment.
-
-Run stage-7 genetic location search on the recorded scenario:
-
-```powershell
-python -B -m experiments.baseline.genetic_demo --input data/generated/synthetic_v1_seed42_n60_m3.json
-```
-
-Compare a small run with the exact reference:
-
-```powershell
-python -B -m experiments.baseline.genetic_demo --tasks 3 --servers 2 --verify-exact
-```
-
-The reference mode selects locations using roulette selection, adaptive
-crossover/mutation, and elitism, with the affine model's endpoint ratio optimum;
-that mode is explicitly not SA-PSO or full BOALBFS. Search settings,
-the separate optimizer seed, budget, and generation history are retained in
-the JSON output. See [equation mapping and assumptions](references/genetic_search.md).
-
-Run the integrated two-layer method on the same recorded inputs:
-
-```powershell
-python -B -m experiments.baseline.genetic_demo --method boalbfs --input data/generated/synthetic_v1_seed42_n60_m3.json
-```
-
-For a small exact comparison, use `--method boalbfs --tasks 3 --servers 2 --verify-exact`.
-The integrated demo defaults to a small GA budget of 10 individuals and 5
-generations, with 8 particles and 10 iterations per feasible nonlocal candidate.
-Its JSON distinguishes GA calls from actual plan evaluations. SA-PSO genuinely
-searches ratios; it does not call the analytical oracle. Settings not recovered
-from the paper, annealing behavior, and limitations are [documented](references/boalbfs.md).
-
-Run the paired Local / Edge / Local-Edge comparison (5 dataset seeds, 3 optimizer
-seeds, 60 tasks, 3 servers):
-
-```powershell
-python -B -m experiments.baseline.mode_comparison --output results/baseline_modes_v1
-```
-
-Use a new output directory; existing runs are never overwritten. Each bundle
-contains saved input datasets, complete decisions and generation histories,
-raw/summary CSVs, a four-metric figure, settings, software versions, and checksums.
-Generated files under `results/` are kept locally and ignored by Git; directory
-placeholders remain tracked. A fresh clone must generate its own result bundle
-with the command above. Selected evidence can be published later.
-Edge uses the same upper GA budget with full ratios and server-only genes.
-Local-Edge has extra swarm calls, so this is not an equal-compute algorithm race.
-Means first combine optimizer repeats within each dataset; error bars are sample
-SD across dataset means, not confidence intervals. See [the step-by-step experiment
-guide](references/experiments.md), especially the normalization limitation that
-prevents this interpretation from reproducing Fig. 2's Edge/Local ordering.
-
-## Proposed Extension
-
-The selected contribution investigates whether the existing affine ratio
-calculation can reduce search cost. The first comparison fixes round-robin
-server selections; the second compares complete GA+SA-PSO and GA+Analytical
-pipelines. Both receive identical tasks, fuzzy risks, capacities, normalization,
-and upper GA settings, but their later server choices can differ.
-No calculation engine was changed and no new optimizer family was introduced.
-
-```powershell
-python -B -m experiments.proposed.ratio_comparison --output results/proposed_ratios_v1_checked
-```
-
-Use a new directory if that output already exists. The recorded comparison uses
-5 datasets and 3 optimizer repeats: mean F is 0.325002 for SA-PSO and 0.237908
-for analytical ratios. Against the simpler zero-ratio control (F=0.239277), the
-analytical mean-F reduction is only about 0.572%. This is a conditional ratio
-study, not an end-to-end BOALBFS improvement or global location optimum.
-Results stay local under ignored `results/`. See [the protocol, cost accounting,
-initialization caveat, and results](references/ratio_comparison.md).
-
-Run the full comparison with the same 100-candidate GA budget per method:
-
-```powershell
-python -B -m experiments.proposed.ratio_comparison --scope pipeline --output results/proposed_pipelines_v1_checked
-```
-
-Use a new output directory. This is an equal-upper-budget experiment, not an
-equal-compute comparison. Record actual full-plan calls AND analytical task
-endpoint calculations; total solver time includes both search layers.
-In the full comparison, mean F is 0.238117 for GA+SA-PSO and 0.236411 for
-GA+Analytical. The mean paired objective reduction is 0.706169% (12 better,
-3 equal, none worse); lower aggregate F does not mean every component improves.
-Mean total decision-search time is 9.7044 s versus 0.1878 s on this machine,
-about 51.7 times lower under these settings. This excludes dataset/fuzzy
-generation, serialization and GUI work; it is not actual task execution time.
-Mean latency and load variance decrease, while mean model risk increases from
-0.004116 to 0.009375. This is a cost optimization under recorded synthetic
-assumptions, not a new fuzzy algorithm or global assignment optimum.
-
-## Experimental Results
-
-The first paired experiment used 5 dataset seeds and 3 optimizer seeds, with
-60 tasks and 3 servers. All 45 mode records were feasible.
-
-| Mode | Mean F | Sum of task latencies (s) | Total model risk | Load variance |
-| --- | ---: | ---: | ---: | ---: |
-| Local | 0.239262 | 219.9130 | 0 | 0 |
-| Edge | 0.621733 | 265.2710 | 5.550637 | 0.000130 |
-| Local-Edge | 0.238117 | 218.4440 | 0.004116 | 0.000701 |
-
-Local-Edge's mean paired objective gain is 0.469991% versus Local and 61.692433%
-versus Edge. This is exploratory evidence with project-specific inputs/scales,
-not the paper's reported improvements or a statistical significance claim.
-Lower F does not mean every component improves: risk and load variance are higher
-than Local. The normalization limitation above prevents matching Fig. 2's
-Edge/Local ordering. See [the full interpretation](references/experiments.md).
-
-Raw evidence is stored locally, outside Git tracking, in
-`results/baseline_modes_v1`; a fresh replay bundle
-`results/baseline_modes_v1_replay` retains the corrected figure layout and
-reproducibility check without overwriting the first run.
-All 45 decisions, metric breakdowns, histories, and evaluation counts replayed
-exactly; elapsed search times are not expected to match. Replay artifact/source
-checksums were verified. Current verification: 753 tests pass; generated experiment bundles remain local
-and are not treated as source data.
-
-## Limitations
-
-- The two-layer baseline and selected mode comparison use recorded assumptions,
-  not recovered author code/data. Quantitative agreement with the paper is not established.
-- Expert weights and the security threshold must be supplied explicitly to the
-  assessment API. Demo parameters are illustrative choices.
-- The paper's numeric triangular assessment baseline accepts explicit numeric
-  inputs directly; the separate proposed Mamdani controller implements its own
-  low/medium/high membership functions and rule base. This is not claimed to be
-  the paper's missing linguistic Table 3 mapping.
-- The security-risk condition follows Eq. (14), whose following prose reverses
-  the inequality. This decision is documented in the equation notes.
-- Latency/load calculators use explicit bits/s, cycles/s, Hz, and MB inputs.
-  Published CPU and noise units remain ambiguous. The generator records
-  explicit project choices rather than treating MIPS as cycles/s or dBm as W/Hz.
-- Generated expert triangles and workload distributions are numeric stress-test
-  assumptions, not real factory observations or the recovered author dataset.
-- Supplied round-robin/50% plans are checks, not optimized BOALBFS results.
-- Exact search is limited to small instances. Its endpoint-optimum guarantee
-  relies on the current affine ratio model and fixed reservations/normalizers.
-- Genetic location search guarantees only the best observed feasible plan.
-  Its Eq. (35) mutation interpretation and initialization choices are documented;
-  the separate analytical ratio reference does not reproduce the SA-PSO layer.
-- SA-PSO keeps the best observed ratios, not a guaranteed optimum. Its temperature,
-  learning coefficients, initialization, and stopping budget are project choices.
-- The selected mode experiment is exploratory. Its fixed risk normalization and
-  equal objective weights imply full Edge has higher F than Local when risk is
-  positive. Do not claim quantitative agreement with Fig. 2 or tune results to fit it.
-- The selected MRR and the course-guideline compliance matrix are recorded in
-  [project_guideline_alignment.md](references/project_guideline_alignment.md).
-  The paper's unavailable author dataset prevents a claim of exact numerical
-  reproduction; the instructor-approved synthetic-data protocol is explicit.
-- The first contribution experiment holds round-robin locations fixed; the
-  follow-up measures both search layers under the same upper GA budget.
-  SA-PSO uses random initial particles, not the zero-ratio capacity check as its
-  incumbent. Its comparison gap must not be generalized to all search settings.
-
-## Reproducibility
-
-Random seeds, software dependencies, experimental parameters, and dataset-generation procedures will be documented to support reproducibility.
-
-The current implementation starts this requirement with:
-
-- centralized experiment configuration in `src/config.py`,
-- validated domain models in `src/models.py`,
-- deterministic random number utilities in `src/random_utils.py`,
-- numerical fuzzy security assessment in `src/fuzzy_security.py`,
-- unit-aware latency and resource-load calculations in `src/latency.py` and `src/load_balance.py`,
-- shared multi-task evaluation and fixed objective scales in `src/evaluation.py` and `src/objective.py`,
-- seeded scenario generation and validated JSON snapshots in `src/synthetic.py` and `src/dataset_io.py`,
-- bounded, deterministic small-instance verification in `src/optimizers/exact.py`,
-- seeded adaptive location search and its ratio reference in `src/optimizers/genetic.py` and `src/optimizers/locations.py`,
-- independent seeded SA-PSO ratios and two-layer integration in `src/optimizers/sapso.py`,
-- automated tests that protect configuration validation, model constraints, and random-seed behavior.
-
-New stochastic components should receive the independent generators returned by
-`create_random_state`. That helper accepts non-negative integer seeds. The
-legacy `seed_global_generators` helper accepts only seeds in `[0, 2**32 - 1]`
-and validates them before changing either global generator.
-
-`ExperimentConfig` defaults of 30 tasks and 5 servers are small development
-settings, not the paper's experimental setup. The paper reports task counts in
-`[60, 140]`, server counts in `[3, 9]`, and equal perspective weights in Table 4.
-Recorded software versions and seeds are needed together; a seed alone does not
-promise identical results across all library versions.
-
-## Academic Integrity and AI Usage
-
-External code, datasets, or materials used in this project will be explicitly documented and cited.
-
-Generative AI tools may be used as development aids for explanation, debugging, code review, and documentation. All generated material will be reviewed and validated by the student.
-
-A Generative AI Usage Disclosure will also be included in the final technical report.
-
-The repository-side checklist for the course guideline is in
-[project_guideline_alignment.md](references/project_guideline_alignment.md).
-The current state and safe continuation instructions for another development
-assistant are in [next_agent_handoff.md](references/next_agent_handoff.md).
-
-## References
-
-See [references/README.md](references/README.md) for the current reference list.
-Related-work references will be added after their contents have been verified.
+Kullanım ve telif koşulları: [LICENSE](LICENSE).

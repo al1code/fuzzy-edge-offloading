@@ -59,11 +59,18 @@ dist/
 *.bak
 
 # -------------------------
-# Generated experiment outputs (kept locally)
+# Published results; other generated runs stay local
 # -------------------------
-/results/**
-!/results/**/
-!/results/**/.gitkeep
+/results/*
+!/results/figures/
+!/results/tables/
+/results/figures/*
+/results/tables/*
+!/results/README.md
+!/results/figures/README.md
+!/results/tables/README.md
+!/results/figures/*.png
+!/results/tables/*.csv
 
 # -------------------------
 # Author-provided/private data
@@ -78,3 +85,12 @@ data/author_provided/*
 .env.*
 *.key
 *.pem
+
+# Local authoring and scratch files
+/.tmp/
+/work/
+/.chart-data-*/
+~$*
+
+# Regenerable synthetic inputs
+/data/generated/

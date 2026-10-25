@@ -85,7 +85,7 @@ def main() -> None:
                 "best_objective_value": result.best.objective.value,
                 "best": asdict(result.best),
                 "parameter_notes": "references/synthetic_data.md",
-                "search_notes": "references/exact_search.md",
+                "search_notes": "references/README.md#kesin-ve-analitik-kontrol",
             },
             indent=2,
             allow_nan=False,

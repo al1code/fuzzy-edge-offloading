@@ -1444,18 +1444,6 @@ def learning_view(data):
         "tek görev hesabıdır; çok görevli uygunluk veya optimum çözüm iddiası yoktur. "
         "Üç süre toplanır. Üstteki özet kartları ise gösterilen tam plana aittir."
     )
-    st.markdown("#### Kodları hangi sırayla okumalıyım?")
-    st.markdown(
-        "1. `models.py` ve `config.py`: görev/sunucu verileri ve ayarlar.\n"
-        "2. `fuzzy_security.py`: uzman üçgeni → S → risk.\n"
-        "3. `latency.py`, `load_balance.py`, `objective.py`: süre, yük ve F.\n"
-        "4. `evaluation.py`: verilen tam planın doğru ve uygun olup olmadığını hesaplar.\n"
-        "5. `optimizers/genetic.py`, `sapso.py`: farklı planları deneyip en iyisini arar.\n"
-        "6. `fuzzy_controller.py`: bizim S/U → üst oran katkımız.\n"
-        "7. `gui/services.py`, `dashboard.py`: bu hesapları ekrana bağlar.\n\n"
-        "İlk deneme: 3 görev, 2 sunucu, seed 42 ile başla; önce Görev ve Sunucular, "
-        "sonra Bulanık Güvenlik, Çözüm Karşılaştırması ve Mamdani Katkısı ekranlarına geç."
-    )
 
 
 def experiments_view(data, settings):
@@ -1557,8 +1545,7 @@ def experiments_view(data, settings):
         (
             i
             for i, p in enumerate(folders)
-            if p.name
-            == st.session_state.get("last_bundle", "proposed_pipelines_v1_checked")
+            if p.name == st.session_state.get("last_bundle", "ratio_pipeline")
         ),
         0,
     )
@@ -1895,5 +1882,5 @@ def main():
             "[Jin ve ark. (2024)](https://www.nature.com/articles/s41598-024-79464-2): fuzzy Denklem 11\u201315, s\u00fcre 16, risk 18, ama\u00e7 19. Yazar kodu/verisi de\u011fil, belgeli varsay\u0131mlarla yeniden uygulama."
         )
         st.write(
-            "Risk ger\u00e7ek sald\u0131r\u0131 tahmini de\u011fildir. Kuyruk ve paralel bitirme zaman\u0131 yok. Analitik oran, sabit kaynak ve normalizasyon varsay\u0131m\u0131na dayan\u0131r. Hocan\u0131n projeye \u00f6zel MRR'si hen\u00fcz netle\u015fmedi."
+            "Risk ger\u00e7ek sald\u0131r\u0131 tahmini de\u011fildir. Kuyruk ve paralel bitirme zaman\u0131 yok. Analitik oran, sabit kaynak ve normalizasyon varsay\u0131m\u0131na dayan\u0131r."
         )

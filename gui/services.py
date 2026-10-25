@@ -363,7 +363,12 @@ def export_run(
 
 def list_bundles(root: Path) -> list[Path]:
     return sorted(
-        p.parent for p in (root / "results").glob("*/manifest.json") if p.is_file()
+        {
+            p.parent
+            for base in (root / "results", root / "results/archive")
+            for p in base.glob("*/manifest.json")
+            if p.is_file()
+        }
     )
 
 
@@ -396,11 +401,10 @@ def load_bundle(folder: Path) -> tuple[dict, list[dict]]:
 
 
 def bundle_configuration(manifest: dict) -> tuple[ObjectiveConfig, LoadBalanceConfig]:
-    """Read recorded weights; support only the known equal-weight legacy v1.
+    """Read explicit weights or the defined equal-weight Mamdani format.
 
-    Early uncertainty-aware-mamdani-v1 bundles omitted weights while their
-    runner always used both equal-weight defaults. Other incomplete manifests
-    must not silently inherit current defaults.
+    Only uncertainty-aware-mamdani-v1 permits omitted weights, with both
+    sets defined as equal. Other incomplete manifests are rejected.
     """
 
     if (

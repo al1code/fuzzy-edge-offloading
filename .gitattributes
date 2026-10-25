@@ -15,3 +15,8 @@
 .gitignore text eol=lf
 .gitattributes text eol=lf
 LICENSE text eol=lf
+# Binary deliverables
+*.pdf binary
+*.pptx binary
+*.png binary
+*.jpg binary
